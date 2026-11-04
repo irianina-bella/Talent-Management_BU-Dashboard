@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X, Inbox } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Inbox, ImageDown } from 'lucide-react';
 
 export const PALETTE = ['#0B1F3A', '#0F9490', '#5B7BA6', '#7FCFCB', '#2C4F80', '#B8C4D6', '#C9973B', '#8A5A83', '#3F8F5A', '#9AA5B1'];
 export const C = { navy: '#0B1F3A', teal: '#0F9490', slate: '#64748B', amber: '#C9973B', red: '#B4443E', green: '#3F8F5A', grid: '#E5E9F0' };
@@ -12,18 +12,33 @@ export function Card({ className, children }: { className?: string; children: Re
   return <div className={cx('rounded-xl border border-slate-200 bg-white shadow-card', className)}>{children}</div>;
 }
 
-export function Section({ title, subtitle, action, children, className }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
+export function Section({ title, subtitle, action, children, className, png = true }: { title: string; subtitle?: string; action?: React.ReactNode; children: React.ReactNode; className?: string; png?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [busy, setBusy] = useState(false);
+  const exportPng = async () => {
+    if (!ref.current) return;
+    setBusy(true);
+    try {
+      const { exportNodePng } = await import('../lib/exporters');
+      await exportNodePng(ref.current, title);
+    } finally { setBusy(false); }
+  };
   return (
-    <Card className={cx('p-5', className)}>
+    <div ref={ref} className={cx('rounded-xl border border-slate-200 bg-white p-5 shadow-card', className)}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-navy-900">{title}</h3>
           {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
         </div>
-        {action}
+        <div className="flex items-center gap-2" data-export-ignore="true">
+          {action}
+          {png && (
+            <button onClick={exportPng} disabled={busy} title="Download this panel as PNG" aria-label={`Download ${title} as PNG`} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-navy-900 disabled:opacity-40"><ImageDown size={15} /></button>
+          )}
+        </div>
       </div>
       {children}
-    </Card>
+    </div>
   );
 }
 

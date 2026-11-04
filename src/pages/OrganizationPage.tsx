@@ -3,13 +3,14 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { useApp } from '../state/AppState';
 import { FilterBar } from '../components/FilterBar';
 import { Section, PageHeader, Select, BarList, C, PALETTE, cx } from '../components/ui';
-import { ORG_DIMS, OrgDim, groupBy, orgName, isTalent, isSuccessor, isYes, val, pct, uniqueValues } from '../lib/analytics';
+import { ORG_DIMS, OrgDim, groupBy, orgName, isTalent, isCalibTalent, isSuccessor, isYes, val, pct, uniqueValues } from '../lib/analytics';
 import { sortByRank } from '../lib/config';
 import { NA, Employee } from '../lib/model';
 
-type Metric = 'talent' | 'successor' | 'low' | 'gems' | 'riders';
+type Metric = 'talent' | 'calib' | 'successor' | 'low' | 'gems' | 'riders';
 const METRICS: { key: Metric; label: string; fn: (e: Employee, y: 'current' | 'last') => boolean }[] = [
   { key: 'talent', label: 'Talent', fn: (e, y) => isTalent(e, y) },
+  { key: 'calib', label: 'Calibrated Talent', fn: (e, y) => isCalibTalent(e, y) },
   { key: 'successor', label: 'Successors', fn: (e) => isSuccessor(e.v.successor) },
   { key: 'low', label: 'Low Performers', fn: (e) => isYes(e.v.lowPerformer) },
   { key: 'gems', label: 'Hidden Gems', fn: (e) => isYes(e.v.hiddenGems) },
@@ -100,7 +101,7 @@ export default function OrganizationPage() {
               <tr>
                 <th onClick={() => setSortKey('name')} className="cursor-pointer px-3 py-2 text-left font-medium">{dimLabel}</th>
                 {th('n', 'Headcount')}{th('talent', 'Talent')}{th('talentDensity', 'Talent density')}{th('talentShare', 'Talent share')}
-                {th('successor', 'Successors')}{th('successorDensity', 'Succ. coverage')}{th('low', 'Low perf.')}{th('gems', 'Hidden gems')}{th('riders', 'Free riders')}
+                {th('calib', 'Calibrated')}{th('successor', 'Successors')}{th('successorDensity', 'Succ. coverage')}{th('low', 'Low perf.')}{th('gems', 'Hidden gems')}{th('riders', 'Free riders')}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -111,6 +112,7 @@ export default function OrganizationPage() {
                   <td className="px-3 text-right tabular-nums">{r.talent}</td>
                   <td className="px-3 text-right tabular-nums">{(r.talentDensity as number).toFixed(1)}%</td>
                   <td className="px-3 text-right tabular-nums">{(r.talentShare as number).toFixed(1)}%</td>
+                  <td className="px-3 text-right tabular-nums">{r.calib}</td>
                   <td className="px-3 text-right tabular-nums">{r.successor}</td>
                   <td className="px-3 text-right tabular-nums">{(r.successorDensity as number).toFixed(1)}%</td>
                   <td className="px-3 text-right tabular-nums">{r.low}</td>

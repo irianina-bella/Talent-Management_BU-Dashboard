@@ -48,7 +48,7 @@ export default function DataPage({ navigate }: { navigate: (p: PageKey) => void 
 
   return (
     <div>
-      <PageHeader title="Data Import" subtitle="Upload the talent management Excel file. Files are parsed in your browser — no employee data leaves this device." />
+      <PageHeader title="Data Import" subtitle="Upload the talent management Excel file. Files are parsed locally in your browser and kept in memory only — nothing is uploaded, stored or logged." />
 
       {stage.kind !== 'review' && (
         <Card className="mb-6 p-6">
@@ -112,7 +112,7 @@ export default function DataPage({ navigate }: { navigate: (p: PageKey) => void 
                 <CheckCircle2 className="text-teal-600" />
                 <div>
                   <div className="text-sm font-semibold text-navy-900">Active dataset: {raw.fileName}</div>
-                  <div className="text-xs text-slate-500">Sheet "{raw.sheetName}" · imported {new Date(raw.importedAt).toLocaleString()} · stored only in this browser (IndexedDB)</div>
+                  <div className="text-xs text-slate-500">Sheet "{raw.sheetName}" · imported {new Date(raw.importedAt).toLocaleString()} · held in browser memory only — refreshing the page clears it</div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

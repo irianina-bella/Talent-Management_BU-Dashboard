@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Filter, RotateCcw, ChevronDown } from 'lucide-react';
+import { Filter, RotateCcw, ChevronDown, X } from 'lucide-react';
 import { useApp, FILTER_FIELDS, EMPTY_FILTERS, Filters } from '../state/AppState';
 import { uniqueValues, val } from '../lib/analytics';
 import { Select, Button, cx } from './ui';
@@ -37,13 +37,23 @@ export function FilterBar({ showYear = true }: { showYear?: boolean }) {
           )}
         </div>
       </div>
+      {activeCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-4 py-2" aria-label="Active filters">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Active:</span>
+          {FILTER_FIELDS.filter((f) => filters[f.key]).map((f) => (
+            <button key={f.key} onClick={() => set(f.key, '')} className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] text-teal-800 ring-1 ring-teal-100 hover:bg-teal-100" title="Remove filter">
+              {f.label}: <b className="font-semibold">{filters[f.key]}</b><X size={11} />
+            </button>
+          ))}
+        </div>
+      )}
       {open && (
-        <div className="grid grid-cols-2 gap-3 border-t border-slate-100 px-4 py-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
+        <div className="grid grid-cols-2 gap-3 border-t border-slate-100 px-4 py-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-11">
           {FILTER_FIELDS.map((f) => (
             <Select key={f.key} label={f.label} value={filters[f.key]} onChange={(v) => set(f.key, v)} options={options[f.key]} allLabel="All" />
           ))}
           {showYear && (
-            <Select label="Year" value={filters.year} onChange={(v) => set('year', v)} options={[{ value: 'current', label: 'Current year' }, { value: 'last', label: 'Last year' }]} />
+            <Select label="Talent year view" value={filters.year} onChange={(v) => set('year', v)} options={[{ value: 'current', label: 'Current year' }, { value: 'last', label: 'Last year' }]} />
           )}
         </div>
       )}

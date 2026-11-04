@@ -1,5 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { get, set, del } from 'idb-keyval';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { ColumnMapping } from '../lib/fields';
 import { buildEmployees, Employee, ImportResult, RawDataset } from '../lib/model';
 import { AppConfig, loadConfig, saveConfig } from '../lib/config';
@@ -12,6 +11,7 @@ export interface Filters {
   divisionName: string;
   departmentName: string;
   talentCategory: string;
+  talentCluster: string;
   talent12Box: string;
   cLevel: string;
   reviewerName: string;
@@ -20,7 +20,7 @@ export interface Filters {
 
 export const EMPTY_FILTERS: Filters = {
   companyName: '', businessUnit: '', directorateName: '', divisionName: '', departmentName: '',
-  talentCategory: '', talent12Box: '', cLevel: '', reviewerName: '', year: 'current',
+  talentCategory: '', talentCluster: '', talent12Box: '', cLevel: '', reviewerName: '', year: 'current',
 };
 
 export const FILTER_FIELDS: { key: Exclude<keyof Filters, 'year'>; label: string }[] = [
@@ -29,10 +29,11 @@ export const FILTER_FIELDS: { key: Exclude<keyof Filters, 'year'>; label: string
   { key: 'directorateName', label: 'Directorate' },
   { key: 'divisionName', label: 'Division' },
   { key: 'departmentName', label: 'Department' },
-  { key: 'talentCategory', label: 'Talent Category' },
-  { key: 'talent12Box', label: 'Talent Class' },
-  { key: 'cLevel', label: 'C-Level' },
   { key: 'reviewerName', label: 'Reviewer' },
+  { key: 'talentCategory', label: 'Talent Category' },
+  { key: 'talentCluster', label: 'Talent Cluster' },
+  { key: 'talent12Box', label: 'Talent Class 12 Box' },
+  { key: 'cLevel', label: 'C-Level' },
 ];
 
 export interface ListModalState { title: string; subtitle?: string; employees: Employee[]; }
@@ -60,7 +61,9 @@ interface Ctx {
 const AppCtx = createContext<Ctx | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = useState(true);
+  // Employee data lives in React memory only: never written to IndexedDB, localStorage or sessionStorage.
+  // A page refresh or closing the tab clears it.
+  const loading = false;
   const [raw, setRaw] = useState<RawDataset | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -68,15 +71,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [profile, openProfile] = useState<Employee | null>(null);
   const [list, openList] = useState<ListModalState | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [r, m] = await Promise.all([get<RawDataset>('tic.raw'), get<ColumnMapping>('tic.mapping')]);
-        if (r && m) { setRaw(r); setMapping(m); }
-      } catch { /* IndexedDB unavailable: session-only mode */ }
-      setLoading(false);
-    })();
-  }, []);
 
   const result = useMemo(() => (raw && mapping ? buildEmployees(raw, mapping) : null), [raw, mapping]);
   const employees = useMemo(() => result?.employees ?? [], [result]);
@@ -90,19 +84,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setConfig = useCallback((c: AppConfig) => { setConfigState(c); saveConfig(c); }, []);
 
   const commitDataset = useCallback(async (r: RawDataset, m: ColumnMapping) => {
-    setRaw(r); setMapping(m); setFilters(EMPTY_FILTERS);
-    try { await Promise.all([set('tic.raw', r), set('tic.mapping', m)]); } catch { /* ignore */ }
+    setRaw(r); setMapping(m); setFilters(EMPTY_FILTERS); openProfile(null); openList(null);
     return buildEmployees(r, m);
   }, []);
 
   const updateMapping = useCallback(async (m: ColumnMapping) => {
     setMapping(m);
-    try { await set('tic.mapping', m); } catch { /* ignore */ }
   }, []);
 
   const clearDataset = useCallback(async () => {
     setRaw(null); setMapping(null); setFilters(EMPTY_FILTERS); openProfile(null); openList(null);
-    try { await Promise.all([del('tic.raw'), del('tic.mapping')]); } catch { /* ignore */ }
   }, []);
 
   const value: Ctx = {

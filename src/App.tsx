@@ -14,6 +14,8 @@ import OrganizationPage from './pages/OrganizationPage';
 import MovementPage from './pages/MovementPage';
 import EmployeesPage from './pages/EmployeesPage';
 import SettingsPage from './pages/SettingsPage';
+import DistributionPage from './pages/DistributionPage';
+import RiskPage from './pages/RiskPage';
 
 class ErrorBoundary extends Component<{ children: ReactNode; resetKey: string }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -49,7 +51,7 @@ function Shell() {
   const setPage = (p: PageKey) => { window.location.hash = `/${p}`; setPageState(p); window.scrollTo(0, 0); };
 
   const needsData = !['data', 'settings'].includes(page) && employees.length === 0;
-  const pages: Record<PageKey, React.ComponentType<{ navigate: (p: PageKey) => void }>> = { overview: OverviewPage, calibration: CalibrationPage, matrix: MatrixPage, succession: SuccessionPage, performance: PerformancePage, organization: OrganizationPage, movement: MovementPage, employees: EmployeesPage, data: DataPage, settings: SettingsPage };
+  const pages: Record<PageKey, React.ComponentType<{ navigate: (p: PageKey) => void }>> = { overview: OverviewPage, distribution: DistributionPage, risk: RiskPage, calibration: CalibrationPage, matrix: MatrixPage, succession: SuccessionPage, performance: PerformancePage, organization: OrganizationPage, movement: MovementPage, employees: EmployeesPage, data: DataPage, settings: SettingsPage };
   const Page = pages[page];
 
   return (
@@ -59,10 +61,10 @@ function Shell() {
           <div className="py-20"><Spinner label="Loading workspace…" /></div>
         ) : needsData ? (
           <EmptyState icon={<Upload size={22} />} title="No talent dataset loaded"
-            text="Upload your talent management Excel file (.xlsx, .xls or .csv). Data is processed entirely in your browser and is never sent to a server."
+            text="Upload your talent management Excel file (.xlsx, .xls or .csv). Data is processed in your browser, held in memory only, and cleared when you refresh or press Clear data."
             action={<Button onClick={() => setPage('data')}><Upload size={15} />Upload dataset</Button>} />
         ) : (
-          <Page navigate={setPage} />
+          <div id="page-content"><Page navigate={setPage} /></div>
         )}
       </ErrorBoundary>
       <ListModal />

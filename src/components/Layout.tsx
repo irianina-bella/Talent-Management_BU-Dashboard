@@ -1,18 +1,22 @@
 import { useState } from 'react';
-import { LayoutDashboard, Scale, Grid3x3, Users, LineChart, Building2, ArrowLeftRight, Upload, Settings, Contact, Menu, X, Compass, Lock } from 'lucide-react';
+import { LayoutDashboard, Scale, Grid3x3, Users, LineChart, Building2, ArrowLeftRight, Upload, Settings, Contact, Menu, X, Compass, Lock, PieChart, ShieldAlert } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { cx } from './ui';
+import { HeaderActions } from './ExportMenu';
 
-export type PageKey = 'overview' | 'calibration' | 'matrix' | 'succession' | 'performance' | 'organization' | 'movement' | 'employees' | 'data' | 'settings';
+export type PageKey = 'overview' | 'distribution' | 'risk' | 'calibration' | 'matrix' | 'succession' | 'performance' | 'organization' | 'movement' | 'employees' | 'data' | 'settings';
 
-export const NAV: { key: PageKey; label: string; icon: React.ComponentType<{ size?: number }>; section: string }[] = [
+export const NAV: { key: PageKey; label: string; icon: LucideIcon; section: string }[] = [
   { key: 'overview', label: 'Executive Overview', icon: LayoutDashboard, section: 'Analytics' },
+  { key: 'distribution', label: 'Talent Distribution', icon: PieChart, section: 'Analytics' },
   { key: 'calibration', label: 'Talent Calibration', icon: Scale, section: 'Analytics' },
   { key: 'matrix', label: 'Talent Matrix', icon: Grid3x3, section: 'Analytics' },
   { key: 'succession', label: 'Succession', icon: Users, section: 'Analytics' },
   { key: 'performance', label: 'Performance History', icon: LineChart, section: 'Analytics' },
   { key: 'organization', label: 'Organization Talent', icon: Building2, section: 'Analytics' },
   { key: 'movement', label: 'Talent Movement', icon: ArrowLeftRight, section: 'Analytics' },
+  { key: 'risk', label: 'Talent Risk Indicators', icon: ShieldAlert, section: 'Analytics' },
   { key: 'employees', label: 'Employee Directory', icon: Contact, section: 'Talent' },
   { key: 'data', label: 'Data Import', icon: Upload, section: 'Administration' },
   { key: 'settings', label: 'Mapping & Rules', icon: Settings, section: 'Administration' },
@@ -28,8 +32,8 @@ export function Layout({ page, setPage, children }: { page: PageKey; setPage: (p
       <div className="flex items-center gap-2.5 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600"><Compass size={20} className="text-white" /></div>
         <div className="leading-tight">
-          <div className="text-sm font-semibold text-white">Talent Intelligence</div>
-          <div className="text-[11px] tracking-wide text-teal-100/80">Compass · Calibration Analytics</div>
+          <div className="text-sm font-semibold text-white">Talent Analytics</div>
+          <div className="text-[11px] tracking-wide text-teal-100/80">Compass · HR Analytics</div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-3 pb-4">
@@ -56,7 +60,7 @@ export function Layout({ page, setPage, children }: { page: PageKey; setPage: (p
             <div>{employees.length.toLocaleString()} employees · {new Date(raw.importedAt).toLocaleDateString()}</div>
           </>
         ) : <div>No dataset loaded</div>}
-        <div className="mt-2 flex items-center gap-1.5 text-teal-100/70"><Lock size={11} />Processed locally in your browser</div>
+        <div className="mt-2 flex items-center gap-1.5 text-teal-100/70"><Lock size={11} />In-memory only · cleared on refresh</div>
       </div>
     </nav>
   );
@@ -76,7 +80,7 @@ export function Layout({ page, setPage, children }: { page: PageKey; setPage: (p
             <button className="rounded-md p-1.5 text-navy-900 hover:bg-slate-100 lg:hidden" onClick={() => setMobile(!mobile)} aria-label="Menu">{mobile ? <X size={20} /> : <Menu size={20} />}</button>
             <span className="text-sm font-medium text-navy-900">{NAV.find((n) => n.key === page)?.label}</span>
           </div>
-          <span className="hidden text-xs text-slate-500 sm:block">Talent Intelligence Compass</span>
+          <HeaderActions />
         </header>
         <main className="mx-auto max-w-[1600px] px-4 py-6 lg:px-8">{children}</main>
       </div>

@@ -92,7 +92,7 @@ export function orgName(e: Employee, dim: OrgDim): string {
   return val(e, ORG_DIMS.find((d) => d.key === dim)!.field);
 }
 
-export type OrgDim = 'company' | 'bu' | 'directorate' | 'division' | 'department' | 'clevel' | 'personnelArea';
+export type OrgDim = 'company' | 'bu' | 'directorate' | 'division' | 'department' | 'clevel' | 'reviewer' | 'personnelArea';
 export const ORG_DIMS: { key: OrgDim; label: string; field: FieldKey }[] = [
   { key: 'company', label: 'Company', field: 'companyName' },
   { key: 'bu', label: 'Business Unit', field: 'businessUnit' },
@@ -100,5 +100,6 @@ export const ORG_DIMS: { key: OrgDim; label: string; field: FieldKey }[] = [
   { key: 'division', label: 'Division', field: 'divisionName' },
   { key: 'department', label: 'Department', field: 'departmentName' },
   { key: 'clevel', label: 'C-Level', field: 'cLevel' },
+  { key: 'reviewer', label: 'Reviewer', field: 'reviewerName' },
   { key: 'personnelArea', label: 'Personnel Area', field: 'personnelArea' },
 ];

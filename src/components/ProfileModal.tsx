@@ -91,7 +91,7 @@ function ProfileCard({ e, innerRef }: { e: Employee; innerRef: React.Ref<HTMLDiv
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-slate-200 px-12 py-3 text-[11px] text-slate-400">
-        <span>Talent Intelligence Compass · Confidential — for Talent Council use only</span>
+        <span>Talent Analytics Compass · Confidential — for Talent Council use only</span>
         <span>Successor: {d(e, 'successor')} · Last change: {d(e, 'lastChange')}</span>
       </div>
     </div>

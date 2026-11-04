@@ -1,4 +1,3 @@
-/// <reference lib="webworker" />
 import { parseArrayBuffer } from './parse';
 
 self.onmessage = (e: MessageEvent<{ buf: ArrayBuffer; isCsv: boolean }>) => {

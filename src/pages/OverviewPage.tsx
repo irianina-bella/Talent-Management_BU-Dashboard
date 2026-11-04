@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Users, Star, UserCheck, Gem, ShieldAlert, TrendingDown, Scale, ArrowUpDown, Repeat } from 'lucide-react';
+import { Users, Star, UserCheck, Gem, ShieldAlert, TrendingDown, Scale, ArrowUpDown, Repeat, Percent } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { useApp } from '../state/AppState';
 import { FilterBar } from '../components/FilterBar';
@@ -27,7 +27,8 @@ export default function OverviewPage({ navigate }: { navigate: (p: PageKey) => v
     const lyTalent = list.filter((e) => isTalent(e, 'last'));
     const retained = lyTalent.filter((e) => isTalent(e, 'current'));
     const lost = lyTalent.filter((e) => e.v.talentCY && !isTalent(e, 'current'));
-    return { talent, calib, succ, gems, riders, lows, calChanged, up, down, lyTalent, retained, lost };
+    const stable = list.filter((e) => compareRank(config.ranks.talent, e.v.talentLY, e.v.talentCY) === 'Stable');
+    return { talent, calib, succ, gems, riders, lows, calChanged, up, down, stable, lyTalent, retained, lost };
   }, [list, y, config]);
 
   const cat = useMemo(() => {
@@ -37,6 +38,10 @@ export default function OverviewPage({ navigate }: { navigate: (p: PageKey) => v
   }, [list, config]);
   const box = useMemo(() => countBy(list, (e) => val(e, 'talent12Box')), [list]);
   const cluster = useMemo(() => countBy(list, (e) => val(e, 'talentCluster')), [list]);
+  const calibDist = useMemo(() => countBy(list, (e) => val(e, y === 'current' ? 'calibCY' : 'calibLY')), [list, y]);
+  const succDist = useMemo(() => countBy(m.succ, (e) => val(e, 'companyName')), [m]);
+  const perfDist = useMemo(() => countBy(list, (e) => val(e, 'y1Scale')), [list]);
+  const y1Label = useMemo(() => countBy(list, (e) => e.v.y1Year).find((c) => c.name)?.name || 'Year -1', [list]);
   const byCompany = useMemo(() => {
     const g = groupBy(list, (e) => val(e, 'companyName'));
     return [...g.entries()].map(([name, es]) => ({
@@ -64,24 +69,24 @@ export default function OverviewPage({ navigate }: { navigate: (p: PageKey) => v
 
       <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Total Employees" value={n.toLocaleString()} icon={<Users size={18} />} onClick={() => navigate('employees')} />
-        <Kpi label={`Total Talent (${yl})`} value={m.talent.length.toLocaleString()} sub={`${fmtPct(m.talent.length, n)} of workforce`} icon={<Star size={18} />} tone="teal" onClick={() => open(`Talent (${yl})`, m.talent)} />
-        <Kpi label="Successor Coverage" value={fmtPct(m.succ.length, n)} sub={`${m.succ.length} identified successors`} icon={<UserCheck size={18} />} tone="teal" onClick={() => open('Identified successors', m.succ)} />
+        <Kpi label={`Total Talent (${yl})`} value={m.talent.length.toLocaleString()} sub={`${m.calib.length} confirmed after calibration`} icon={<Star size={18} />} tone="teal" onClick={() => open(`Talent (${yl})`, m.talent)} />
+        <Kpi label="Talent Density" value={fmtPct(m.talent.length, n)} sub="talent ÷ employees in scope" icon={<Percent size={18} />} tone="teal" />
+        <Kpi label="Successor Coverage" value={fmtPct(m.succ.length, n)} sub={`${m.succ.length} identified successors`} icon={<UserCheck size={18} />} onClick={() => open('Identified successors', m.succ)} />
         <Kpi label="Hidden Gems" value={m.gems.length} sub={fmtPct(m.gems.length, n)} icon={<Gem size={18} />} onClick={() => open('Hidden Gems', m.gems)} />
         <Kpi label="Free Riders" value={m.riders.length} sub={fmtPct(m.riders.length, n)} icon={<ShieldAlert size={18} />} tone="amber" onClick={() => open('Free Riders', m.riders)} />
-        <Kpi label="Low Performers" value={m.lows.length} sub={fmtPct(m.lows.length, n)} icon={<TrendingDown size={18} />} tone="red" onClick={() => open('Low Performers', m.lows)} />
       </div>
       <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi label={`Calibrated Talent (${yl})`} value={m.calib.length} sub={fmtPct(m.calib.length, n)} icon={<Scale size={18} />} onClick={() => open(`Calibrated talent (${yl})`, m.calib)} />
-        <Kpi label="Calibration Changes" value={m.calChanged.length} sub="Talent ≠ Calibrated result" icon={<Scale size={18} />} tone="slate" onClick={() => open('Calibration changed the talent result', m.calChanged)} />
-        <Kpi label="Talent Upgrades" value={m.up.length} sub="Talent LY → CY" icon={<ArrowUpDown size={18} />} tone="teal" onClick={() => open('Talent upgrades (LY → CY)', m.up)} />
-        <Kpi label="Talent Downgrades" value={m.down.length} sub="Talent LY → CY" icon={<ArrowUpDown size={18} />} tone="amber" onClick={() => open('Talent downgrades (LY → CY)', m.down)} />
-        <Kpi label="Talent Retention" value={fmtPct(m.retained.length, m.lyTalent.length)} sub={`${m.retained.length} of ${m.lyTalent.length} LY talents retained`} icon={<Repeat size={18} />} onClick={() => open('Talent retained (Yes LY and CY)', m.retained)} />
-        <Kpi label="Talent Retention Risk" value={m.lost.length} sub="LY talent not re-identified" icon={<Repeat size={18} />} tone="red" onClick={() => open('Retention risk: LY talent not re-identified in CY', m.lost)} />
+        <Kpi label="Low Performers" value={m.lows.length} sub={fmtPct(m.lows.length, n)} icon={<TrendingDown size={18} />} tone="red" onClick={() => open('Low Performers', m.lows)} />
+        <Kpi label="Talent Upgrade" value={m.up.length} sub="Talent LY → CY" icon={<ArrowUpDown size={18} />} tone="teal" onClick={() => open('Talent upgrades (LY → CY)', m.up)} />
+        <Kpi label="Talent Downgrade" value={m.down.length} sub="Talent LY → CY" icon={<ArrowUpDown size={18} />} tone="amber" onClick={() => open('Talent downgrades (LY → CY)', m.down)} />
+        <Kpi label="Talent Stagnation" value={m.stable.length} sub="same talent flag LY & CY" icon={<Repeat size={18} />} tone="slate" onClick={() => open('Talent stagnation (no change LY → CY)', m.stable)} />
+        <Kpi label="Calibration Changes" value={m.calChanged.length} sub="Talent ≠ calibrated result" icon={<Scale size={18} />} tone="slate" onClick={() => open('Calibration changed the talent result', m.calChanged)} />
+        <Kpi label="Talent Retention" value={fmtPct(m.retained.length, m.lyTalent.length)} sub={`${m.retained.length} of ${m.lyTalent.length} LY talents kept status`} icon={<Repeat size={18} />} onClick={() => open('Talent status retained (Yes LY and CY)', m.retained)} />
       </div>
 
       <Section title="Executive summary" className="mb-5">
         <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">{summary.map((s, i) => <li key={i}>{s}</li>)}</ul>
-        <p className="mt-3 text-[11px] text-slate-400">"Retention risk" refers to talent-status retention between years. The source has no attrition or flight-risk column, so no turnover risk is inferred.</p>
+        <p className="mt-3 text-[11px] text-slate-400">"Talent retention" means talent status kept between years. The source has no attrition or flight-risk column, so no turnover risk is inferred.</p>
       </Section>
 
       <div className="grid gap-5 lg:grid-cols-3">
@@ -89,7 +94,7 @@ export default function OverviewPage({ navigate }: { navigate: (p: PageKey) => v
           <div className="h-64">
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={cat} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={1} onClick={(d) => { const c = clickName(d); if (c) open(`Talent Category: ${c}`, list.filter((e) => val(e, 'talentCategory') === c)); }} className="cursor-pointer">
+                <Pie data={cat} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={1} onClick={(d) => { const c = clickName(d); if (c) open(`Talent Category: ${c}`, list.filter((e) => val(e, 'talentCategory') === c)); }}>
                   {cat.map((c, i) => <Cell key={c.name} fill={c.name === NA ? '#CBD5E1' : PALETTE[i % PALETTE.length]} />)}
                 </Pie>
                 <Tooltip formatter={(v) => [`${v} (${pct(Number(v), n).toFixed(1)}%)`, 'Employees']} />
@@ -103,6 +108,18 @@ export default function OverviewPage({ navigate }: { navigate: (p: PageKey) => v
         </Section>
         <Section title="Talent Cluster" subtitle="Distribution by cluster">
           <BarList data={cluster} total={n} color={C.navy} onClick={(name) => open(`Cluster: ${name}`, list.filter((e) => val(e, 'talentCluster') === name))} />
+        </Section>
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+        <Section title={`Talent Calibration distribution (${yl})`} subtitle={`Values of "Talent Calib (${y === 'current' ? 'Current' : 'Last'} year)"`}>
+          <BarList data={calibDist} total={n} color="#5B7BA6" onClick={(v) => open(`Calibration (${yl}): ${v}`, list.filter((e) => val(e, y === 'current' ? 'calibCY' : 'calibLY') === v))} />
+        </Section>
+        <Section title="Successor distribution" subtitle="Identified successors by company">
+          <BarList data={succDist} total={m.succ.length} onClick={(v) => open(`Successors · ${v}`, m.succ.filter((e) => val(e, 'companyName') === v))} />
+        </Section>
+        <Section title={`Performance distribution (${y1Label})`} subtitle="Year -1 performance scale">
+          <BarList data={perfDist} total={n} color={C.navy} onClick={(v) => open(`${y1Label} scale: ${v}`, list.filter((e) => val(e, 'y1Scale') === v))} />
         </Section>
       </div>
 
