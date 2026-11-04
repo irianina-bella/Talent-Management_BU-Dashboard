@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.*
+*.local
+.vercel
+# Never commit employee data
+*.xlsx
+*.xls
+*.csv
+testdata/
