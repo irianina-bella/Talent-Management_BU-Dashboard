@@ -3,7 +3,7 @@ import { ArrowUp, ArrowDown, X, Plus, RotateCcw, Save } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { MappingEditor } from '../components/MappingEditor';
 import { Section, PageHeader, Button, Note, Select, Badge } from '../components/ui';
-import { AppConfig, DEFAULT_CONFIG, RANK_DIMENSIONS, RankDimension, MatrixConfig } from '../lib/config';
+import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel } from '../lib/config';
 import { ColumnMapping, FieldKey } from '../lib/fields';
 import { Employee } from '../lib/model';
 
@@ -56,43 +56,99 @@ function RankEditor({ dim, values, order, onChange }: { dim: RankDimension; valu
   );
 }
 
-function MatrixEditor({ labels, mx, onChange }: { labels: string[]; mx: MatrixConfig; onChange: (m: MatrixConfig) => void }) {
-  const cellOptions = [{ value: '', label: '— Not placed —' }, ...Array.from({ length: mx.rows }).flatMap((_, r) => Array.from({ length: mx.cols }).map((__, c) => ({ value: `${r},${c}`, label: `Row ${r + 1} (top=1) · Col ${c + 1} (left=1)` })))];
+function MatrixEditor({ dataValues, mx, onChange }: { dataValues: string[]; mx: MatrixConfig; onChange: (m: MatrixConfig) => void }) {
+  const cellOptions = [{ value: '', label: '— Not placed —' }, ...Array.from({ length: mx.rows }).flatMap((_, r) => Array.from({ length: mx.cols }).map((__, c) => ({ value: `${r},${c}`, label: `${mx.rowLabels[r] ?? `Row ${r + 1}`} · ${mx.colLabels[c] ?? `Col ${c + 1}`} ${mx.xAxis}` })))];
   const setCell = (l: string, v: string) => {
     const cells = { ...mx.cells };
     if (!v) delete cells[l];
-    else { const [r, c] = v.split(',').map(Number); cells[l] = { r, c }; }
+    else {
+      const [r, c] = v.split(',').map(Number);
+      // One class per cell: move any class already in the target cell out of it.
+      for (const k of Object.keys(cells)) if (k !== l && cells[k].r === r && cells[k].c === c) delete cells[k];
+      cells[l] = { r, c };
+    }
     onChange({ ...mx, cells });
   };
+  const classes = [...new Set([...Object.keys(DEFAULT_MATRIX.cells), ...Object.keys(mx.cells)])];
+  const unmatched = dataValues.filter((v) => !matchMatrixLabel(v, mx) && !classes.includes(v));
+  const matchedValues = (label: string) => dataValues.filter((v) => matchMatrixLabel(v, mx) === label);
+  const setLabel = (arr: 'rowLabels' | 'colLabels', i: number, v: string) => { const a = [...mx[arr]]; a[i] = v; onChange({ ...mx, [arr]: a }); };
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-3">
+    <div className="grid gap-6 xl:grid-cols-2">
+      <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Rows" value={String(mx.rows)} onChange={(v) => onChange({ ...mx, rows: Number(v) })} options={['2', '3', '4', '5']} />
-          <Select label="Columns" value={String(mx.cols)} onChange={(v) => onChange({ ...mx, cols: Number(v) })} options={['2', '3', '4', '5']} />
           <label className="flex flex-col gap-1"><span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Horizontal axis</span><input className="h-9 rounded-lg border border-slate-300 px-2 text-sm" value={mx.xAxis} onChange={(e) => onChange({ ...mx, xAxis: e.target.value })} /></label>
           <label className="flex flex-col gap-1"><span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Vertical axis</span><input className="h-9 rounded-lg border border-slate-300 px-2 text-sm" value={mx.yAxis} onChange={(e) => onChange({ ...mx, yAxis: e.target.value })} /></label>
         </div>
-        <div className="space-y-1.5">
-          {labels.length === 0 && <p className="text-xs text-slate-400">Upload a dataset to see its 12-Box classes.</p>}
-          {labels.map((l) => (
-            <div key={l} className="flex items-center gap-2">
-              <span className="w-44 shrink-0 truncate text-xs text-navy-900" title={l}>{l}</span>
-              <select className="h-8 flex-1 rounded-md border border-slate-300 px-1.5 text-xs" value={mx.cells[l] ? `${mx.cells[l].r},${mx.cells[l].c}` : ''} onChange={(e) => setCell(l, e.target.value)}>
-                {cellOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Row labels (top → bottom)</div>
+            {Array.from({ length: mx.rows }).map((_, i) => <input key={i} className="h-8 w-full rounded-md border border-slate-300 px-2 text-xs" value={mx.rowLabels[i] ?? ''} onChange={(e) => setLabel('rowLabels', i, e.target.value)} />)}
+          </div>
+          <div className="space-y-1">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Column labels (left → right)</div>
+            {Array.from({ length: mx.cols }).map((_, i) => <input key={i} className="h-8 w-full rounded-md border border-slate-300 px-2 text-xs" value={mx.colLabels[i] ?? ''} onChange={(e) => setLabel('colLabels', i, e.target.value)} />)}
+          </div>
         </div>
+        <div>
+          <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">Talent class → matrix cell</div>
+          <div className="space-y-1.5">
+            {classes.map((l) => {
+              const mv = matchedValues(l);
+              return (
+                <div key={l} className="flex items-center gap-2">
+                  <div className="w-48 shrink-0">
+                    <div className="truncate text-xs font-medium text-navy-900" title={l}>{l}</div>
+                    <div className="truncate text-[10px] text-slate-400" title={mv.join(', ')}>{mv.length ? `Excel: ${mv.join(', ')}` : dataValues.length ? 'no matching Excel value' : ''}</div>
+                  </div>
+                  <select className="h-8 min-w-0 flex-1 rounded-md border border-slate-300 px-1.5 text-xs" value={mx.cells[l] ? `${mx.cells[l].r},${mx.cells[l].c}` : ''} onChange={(e) => setCell(l, e.target.value)}>
+                    {cellOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {unmatched.length > 0 && (
+          <div>
+            <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-amber-700">Excel values not recognised — assign a cell</div>
+            <div className="space-y-1.5">
+              {unmatched.map((l) => (
+                <div key={l} className="flex items-center gap-2">
+                  <span className="w-48 shrink-0 truncate text-xs text-navy-900" title={l}>"{l}"</span>
+                  <select className="h-8 min-w-0 flex-1 rounded-md border border-amber-300 px-1.5 text-xs" value="" onChange={(e) => setCell(l, e.target.value)}>
+                    {cellOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <div>
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">Preview ({mx.yAxis} ↑ · {mx.xAxis} →)</div>
-        <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${mx.cols}, minmax(0,1fr))` }}>
-          {Array.from({ length: mx.rows }).flatMap((_, r) => Array.from({ length: mx.cols }).map((__, c) => {
-            const here = Object.entries(mx.cells).filter(([l, p]) => p.r === r && p.c === c && labels.includes(l)).map(([l]) => l);
-            return <div key={`${r}${c}`} className={`flex min-h-[64px] items-center justify-center rounded-md border p-1 text-center text-[11px] ${here.length ? 'border-teal-500 bg-teal-50 text-navy-900' : 'border-dashed border-slate-300 text-slate-300'}`}>{here.join(' / ') || `${r + 1},${c + 1}`}</div>;
-          }))}
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Preview ({mx.yAxis} ↑ · {mx.xAxis} →)</span>
+          <Button variant="secondary" className="!px-2 !py-1 text-xs" onClick={() => onChange(DEFAULT_MATRIX)}><RotateCcw size={13} />Reset to default mapping</Button>
         </div>
+        <div className="flex gap-2">
+          <div className="grid w-24 shrink-0 gap-1.5" style={{ gridTemplateRows: `repeat(${mx.rows}, minmax(0,1fr))` }}>
+            {Array.from({ length: mx.rows }).map((_, r) => <div key={r} className="flex items-center justify-end text-right text-[10px] font-semibold uppercase text-slate-500">{mx.rowLabels[r]}</div>)}
+          </div>
+          <div className="grid flex-1 gap-1.5" style={{ gridTemplateColumns: `repeat(${mx.cols}, minmax(0,1fr))`, gridTemplateRows: `repeat(${mx.rows}, 4.5rem)` }}>
+            {Array.from({ length: mx.rows }).flatMap((_, r) => Array.from({ length: mx.cols }).map((__, c) => {
+              const here = Object.entries(mx.cells).filter(([, p]) => p.r === r && p.c === c).map(([l]) => l);
+              return <div key={`${r}${c}`} className={`flex items-center justify-center rounded-md border p-1 text-center text-[11px] font-medium ${here.length ? 'border-teal-500 bg-teal-50 text-navy-900' : 'border-dashed border-slate-300 text-slate-300'}`}>{here.join(' / ') || 'empty'}</div>;
+            }))}
+          </div>
+        </div>
+        <div className="mt-1.5 flex gap-2">
+          <div className="w-24 shrink-0" />
+          <div className="grid flex-1 gap-1.5" style={{ gridTemplateColumns: `repeat(${mx.cols}, minmax(0,1fr))` }}>
+            {Array.from({ length: mx.cols }).map((_, c) => <div key={c} className="text-center text-[10px] font-semibold uppercase text-slate-500">{mx.colLabels[c]}</div>)}
+          </div>
+        </div>
+        <p className="mt-3 text-[11px] text-slate-500">Excel values are matched to classes case-insensitively, ignoring spaces, punctuation and plural "s" (e.g. "Average Workers" → Average Worker). Remember to press <b>Save rules</b>.</p>
       </div>
     </div>
   );
@@ -123,7 +179,7 @@ export default function SettingsPage() {
       </Section>
 
       <Section title="Talent hierarchy (movement rules)" subtitle="Upgrade / downgrade are only computed between values ranked here. Values found in the data are offered below each list.">
-        <div className="mb-3"><Note>Default rule: for the Yes/No talent and calibration flags, "Yes" is ranked above "No". Classification hierarchies (12 Box, Cluster, Category) are left empty until you define them.</Note></div>
+        <div className="mb-3"><Note>Default rule: for the Yes/No talent and calibration flags, "Yes" is ranked above "No". Classification hierarchies (Cluster, Category) are left empty until you define them.</Note></div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {RANK_DIMENSIONS.map((d) => (
             <RankEditor key={d.key} dim={d.key} values={valuesFor(employees, d.key)} order={draft.ranks[d.key]} onChange={(o) => setDraft({ ...draft, ranks: { ...draft.ranks, [d.key]: o } })} />
@@ -131,8 +187,8 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      <Section title="Talent matrix layout" subtitle="Place each Talent Class 12 Box value on the grid. No positions are assumed; unplaced classes are listed separately on the matrix page.">
-        <MatrixEditor labels={boxLabels} mx={draft.matrix} onChange={(m) => setDraft({ ...draft, matrix: m })} />
+      <Section title="12 Box matrix mapping" subtitle="Default: standard 3 × 4 layout (Potential High/Medium/Low × Performance Low/Medium/High/Very High). Change any assignment or reset to the default.">
+        <MatrixEditor dataValues={boxLabels} mx={draft.matrix} onChange={(m) => setDraft({ ...draft, matrix: m })} />
       </Section>
 
       <Section title="Data interpretation rules" subtitle="Applied consistently across all modules">

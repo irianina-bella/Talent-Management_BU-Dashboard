@@ -211,5 +211,5 @@ export function ListModal() {
 
 function ListBody() {
   const { list } = useApp();
-  return <EmployeeTable employees={list!.employees} pageSize={12} extraCols={[{ key: 'calibCY', label: 'Calib CY', flag: true }]} />;
+  return <EmployeeTable employees={list!.employees} pageSize={12} columns={list!.columns} extraCols={[{ key: 'calibCY', label: 'Calib CY', flag: true }]} />;
 }

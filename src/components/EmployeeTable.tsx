@@ -32,12 +32,14 @@ const COLS: { key: FieldKey; label: string; flag?: boolean }[] = [
   { key: 'talentCY', label: 'Talent CY', flag: true },
 ];
 
-export function EmployeeTable({ employees, pageSize = 15, extraCols = [] }: { employees: Employee[]; pageSize?: number; extraCols?: { key: FieldKey; label: string; flag?: boolean }[] }) {
+export type TableCol = { key: FieldKey; label: string; flag?: boolean };
+
+export function EmployeeTable({ employees, pageSize = 15, extraCols = [], columns }: { employees: Employee[]; pageSize?: number; extraCols?: TableCol[]; columns?: TableCol[] }) {
   const { openProfile } = useApp();
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState<{ k: FieldKey; dir: 1 | -1 }>({ k: 'employeeName', dir: 1 });
-  const cols = [...COLS, ...extraCols];
+  const cols = columns ?? [...COLS, ...extraCols];
 
   const rows = useMemo(() => {
     const t = q.trim().toLowerCase();

@@ -1,5 +1,5 @@
-// User-configurable analytics rules. Nothing here is assumed from the data:
-// movement hierarchies and matrix positions only exist when configured.
+// User-configurable analytics rules. Movement hierarchies exist only when configured.
+// The 12-Box matrix ships with the organisation's standard 3 x 4 layout (editable in Mapping & Rules).
 
 export type RankDimension = 'talent' | 'calib' | 'talent12Box' | 'talentCluster' | 'talentCategory';
 
@@ -16,6 +16,10 @@ export interface MatrixConfig {
   cols: number;
   xAxis: string;
   yAxis: string;
+  /** Top → bottom */
+  rowLabels: string[];
+  /** Left → right */
+  colLabels: string[];
   /** label → cell; row 0 is the top row, col 0 is the left column */
   cells: Record<string, { r: number; c: number }>;
 }
@@ -35,10 +39,21 @@ export const DEFAULT_CONFIG: AppConfig = {
     talentCluster: [],
     talentCategory: [],
   },
-  matrix: { rows: 3, cols: 4, xAxis: 'Performance', yAxis: 'Potential', cells: {} },
+  matrix: {
+    rows: 3, cols: 4, xAxis: 'Performance', yAxis: 'Potential',
+    rowLabels: ['High Potential', 'Medium Potential', 'Low Potential'],
+    colLabels: ['Low', 'Medium', 'High', 'Very High'],
+    cells: {
+      'Diamond in the Rough': { r: 0, c: 0 }, 'Emerging Leaders': { r: 0, c: 1 }, 'Future Leaders': { r: 0, c: 2 }, 'STAR Leaders': { r: 0, c: 3 },
+      'Strugglers': { r: 1, c: 0 }, 'Steady Performer': { r: 1, c: 1 }, 'Growing Talent': { r: 1, c: 2 }, 'Experts': { r: 1, c: 3 },
+      'Misfits': { r: 2, c: 0 }, 'Average Worker': { r: 2, c: 1 }, 'Solid Contributor': { r: 2, c: 2 }, 'Underutilized / Misplaced': { r: 2, c: 3 },
+    },
+  },
 };
 
-const KEY = 'tic.config.v1';
+export const DEFAULT_MATRIX: MatrixConfig = DEFAULT_CONFIG.matrix;
+
+const KEY = 'tac.config.v2';
 
 export function loadConfig(): AppConfig {
   try {
@@ -47,7 +62,7 @@ export function loadConfig(): AppConfig {
     const p = JSON.parse(s) as Partial<AppConfig>;
     return {
       ranks: { ...DEFAULT_CONFIG.ranks, ...(p.ranks || {}) },
-      matrix: { ...DEFAULT_CONFIG.matrix, ...(p.matrix || {}) },
+      matrix: p.matrix && p.matrix.cells && Object.keys(p.matrix.cells).length ? { ...DEFAULT_CONFIG.matrix, ...p.matrix } : DEFAULT_CONFIG.matrix,
     };
   } catch {
     return DEFAULT_CONFIG;
@@ -76,4 +91,23 @@ export function sortByRank(values: string[], order: string[]): string[] {
     return i < 0 ? Number.MAX_SAFE_INTEGER : i;
   };
   return [...values].sort((a, b) => idx(a) - idx(b) || a.localeCompare(b));
+}
+
+/** Normalise a talent-class label for tolerant matching: case, spacing, punctuation, "&"/"and", plural "s". */
+export function normLabel(s: string): string {
+  return s.toLowerCase().replace(/&/g, ' and ').split(/[^a-z0-9]+/).filter(Boolean)
+    .map((t) => (t.length > 3 && t.endsWith('s') && !t.endsWith('ss') ? t.slice(0, -1) : t)).join('');
+}
+
+/** Find the configured matrix label that an Excel value belongs to (exact-normalised first, then "/"-separated alternatives). */
+export function matchMatrixLabel(value: string, mx: MatrixConfig): string | null {
+  const v = normLabel(value);
+  if (!v) return null;
+  const keys = Object.keys(mx.cells);
+  const exact = keys.find((k) => normLabel(k) === v);
+  if (exact) return exact;
+  // Labels like "Underutilized / Misplaced" also accept either part on its own, and vice versa.
+  const parts = (s: string) => s.split('/').map(normLabel).filter((x) => x.length >= 5);
+  const vp = parts(value);
+  return keys.find((k) => { const kp = parts(k); return kp.some((x) => vp.includes(x) || x === v) || vp.includes(normLabel(k)); }) ?? null;
 }
