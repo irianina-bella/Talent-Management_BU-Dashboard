@@ -3,7 +3,7 @@ import { ColumnMapping } from '../lib/fields';
 import { buildEmployees, Employee, ImportResult, RawDataset } from '../lib/model';
 import { AppConfig, loadConfig, saveConfig } from '../lib/config';
 import { YearView, val } from '../lib/analytics';
-import type { TableCol } from '../components/EmployeeTable';
+import type { TableCol, TrailingColumn } from '../components/EmployeeTable';
 
 export interface Filters {
   companyName: string;
@@ -37,7 +37,7 @@ export const FILTER_FIELDS: { key: Exclude<keyof Filters, 'year'>; label: string
   { key: 'cLevel', label: 'C-Level' },
 ];
 
-export interface ListModalState { title: string; subtitle?: string; employees: Employee[]; columns?: TableCol[] }
+export interface ListModalState { title: string; subtitle?: string; employees: Employee[]; columns?: TableCol[]; trailing?: TrailingColumn }
 
 interface Ctx {
   loading: boolean;

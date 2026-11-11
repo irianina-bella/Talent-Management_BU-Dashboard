@@ -6,6 +6,22 @@ import { compareRank } from '../lib/config';
 import { useApp } from '../state/AppState';
 import { Badge, cx } from './ui';
 import { FieldKey } from '../lib/fields';
+import { evaluateEmployeeAlignment } from '../analytics/aspirationAlignment';
+import type { EmployeeAlignment } from '../types/aspirationAlignment';
+import { STATUS_STYLE } from '../modules/aspiration-alignment/common';
+import { AlignmentCardModal } from '../modules/aspiration-alignment/AlignmentCard';
+
+/** Aspiration Alignment cell: score (prominent) with classification badge below. Uses the central 70:30 engine. */
+function AlignmentCell({ a, onOpen }: { a: EmployeeAlignment; onOpen: () => void }) {
+  const s = STATUS_STYLE[a.status];
+  return (
+    <button onClick={(ev) => { ev.stopPropagation(); onOpen(); }} title="Show calculation breakdown"
+      className="flex min-w-[132px] flex-col items-start rounded-md px-2 py-1 text-left transition hover:ring-2 hover:ring-navy-900" style={{ background: s.bg }}>
+      <span className="text-sm font-bold tabular-nums leading-tight" style={{ color: s.fg }}>{a.result ? a.result.displayAlignmentScore : 'N/A'}</span>
+      <span className="text-[10px] font-semibold leading-tight" style={{ color: s.fg }}>{a.status}</span>
+    </button>
+  );
+}
 
 export function MovementBadge({ e }: { e: Employee }) {
   const { config } = useApp();
@@ -34,18 +50,27 @@ const COLS: { key: FieldKey; label: string; flag?: boolean }[] = [
 
 export type TableCol = { key: FieldKey; label: string; flag?: boolean };
 
-export function EmployeeTable({ employees, pageSize = 15, extraCols = [], columns }: { employees: Employee[]; pageSize?: number; extraCols?: TableCol[]; columns?: TableCol[] }) {
+export type TrailingColumn = 'movement' | 'alignment';
+
+export function EmployeeTable({ employees, pageSize = 15, extraCols = [], columns, trailing = 'movement' }: { employees: Employee[]; pageSize?: number; extraCols?: TableCol[]; columns?: TableCol[]; trailing?: TrailingColumn }) {
   const { openProfile } = useApp();
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
-  const [sort, setSort] = useState<{ k: FieldKey; dir: 1 | -1 }>({ k: 'employeeName', dir: 1 });
+  const [sort, setSort] = useState<{ k: FieldKey | '__alignment'; dir: 1 | -1 }>({ k: 'employeeName', dir: 1 });
+  const [breakdown, setBreakdown] = useState<{ e: Employee; a: EmployeeAlignment } | null>(null);
+  const alignment = useMemo(() => (trailing === 'alignment' ? new Map(employees.map((e) => [e.id, evaluateEmployeeAlignment(e.v.shortTermAspiration, e.v.longTermAspiration)])) : null), [employees, trailing]);
   const cols = columns ?? [...COLS, ...extraCols];
 
   const rows = useMemo(() => {
     const t = q.trim().toLowerCase();
     const list = t ? employees.filter((e) => [e.v.employeeName, e.v.personnelNumber, e.v.positionName, e.v.departmentName, e.v.divisionName].some((s) => s.toLowerCase().includes(t))) : employees;
-    return [...list].sort((a, b) => a.v[sort.k].localeCompare(b.v[sort.k], undefined, { numeric: true }) * sort.dir);
-  }, [employees, q, sort]);
+    if (sort.k === '__alignment') {
+      const sc = (e: Employee) => alignment?.get(e.id)?.result?.rawAlignmentScore ?? -1;
+      return [...list].sort((a, b) => (sc(a) - sc(b)) * sort.dir);
+    }
+    const k = sort.k;
+    return [...list].sort((a, b) => a.v[k].localeCompare(b.v[k], undefined, { numeric: true }) * sort.dir);
+  }, [employees, q, sort, alignment]);
 
   const pages = Math.max(1, Math.ceil(rows.length / pageSize));
   const p = Math.min(page, pages - 1);
@@ -69,7 +94,11 @@ export function EmployeeTable({ employees, pageSize = 15, extraCols = [], column
                   {c.label}{sort.k === c.key ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}
                 </th>
               ))}
-              <th className="px-3 py-2 font-medium">Movement</th>
+              {trailing === 'alignment' ? (
+                <th className="cursor-pointer whitespace-nowrap px-3 py-2 font-medium hover:text-navy-900" onClick={() => setSort({ k: '__alignment', dir: sort.k === '__alignment' ? (sort.dir === 1 ? -1 : 1) : -1 })}>
+                  Aspiration Alignment{sort.k === '__alignment' ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}
+                </th>
+              ) : <th className="px-3 py-2 font-medium">Movement</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -80,7 +109,9 @@ export function EmployeeTable({ employees, pageSize = 15, extraCols = [], column
                     {c.flag ? <FlagCell v={e.v[c.key]} /> : val(e, c.key) === 'N/A' ? <span className="text-slate-400">N/A</span> : val(e, c.key)}
                   </td>
                 ))}
-                <td className="px-3 py-2"><MovementBadge e={e} /></td>
+                <td className="px-3 py-1.5">
+                  {trailing === 'alignment' ? <AlignmentCell a={alignment!.get(e.id)!} onOpen={() => setBreakdown({ e, a: alignment!.get(e.id)! })} /> : <MovementBadge e={e} />}
+                </td>
               </tr>
             ))}
             {!slice.length && <tr><td colSpan={cols.length + 1} className="px-3 py-8 text-center text-slate-400">No employees match.</td></tr>}
@@ -94,6 +125,7 @@ export function EmployeeTable({ employees, pageSize = 15, extraCols = [], column
           <button className="rounded-md border border-slate-300 p-1 disabled:opacity-40" disabled={p >= pages - 1} onClick={() => setPage(p + 1)} aria-label="Next page"><ChevronRight size={14} /></button>
         </div>
       )}
+      {breakdown && <AlignmentCardModal e={breakdown.e} a={breakdown.a} onClose={() => setBreakdown(null)} />}
     </div>
   );
 }

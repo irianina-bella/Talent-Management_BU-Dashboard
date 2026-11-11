@@ -5,6 +5,7 @@ import { display, type Employee } from '../../lib/model';
 import type { EmployeeAlignment, AspirationSide } from '../../types/aspirationAlignment';
 import { HIGH_THRESHOLD, MEDIUM_THRESHOLD } from '../../analytics/aspirationAlignment';
 import { STATUS_STYLE } from './common';
+import { categoryKey } from '../../analytics/aspirationCategoryMapping';
 
 const fmt2 = (n: number) => n.toFixed(2);
 
@@ -14,7 +15,8 @@ function SideBlock({ title, side, weight, weighted }: { title: string; side: Asp
     <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-6">
       <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-teal-700">{title}</div>
       <div className="mt-2 min-h-[60px] text-[22px] font-semibold leading-tight text-navy-900">{side.original ? side.original : 'N/A'}</div>
-      {side.status === 'unmapped' && <div className="text-[12px] font-semibold text-[#6B3F66]">UNMAPPED CATEGORY — not scored</div>}
+      {side.status === 'unmapped' && <div className="text-[12px] font-semibold text-slate-600">UNMAPPED CATEGORY — not scored</div>}
+      {c && categoryKey(side.original) !== categoryKey(c.name) && <div className="text-[12px] text-slate-500">Approved category: <b className="text-navy-900">{c.name}</b> (approved alias)</div>}
       <div className="mt-auto grid grid-cols-4 gap-2 pt-4 text-center">
         {[['Classification', c ? c.classification : 'N/A'], ['Point', c ? String(c.point) : 'N/A'], ['Weight', weight], ['Weighted', weighted === null ? 'N/A' : fmt2(weighted)]].map(([l, v]) => (
           <div key={l} className="rounded-lg bg-slate-50 py-2.5">

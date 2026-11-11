@@ -46,6 +46,18 @@ test('All 10 approved categories map to the approved points', APPROVED_CATEGORIE
   APPROVED_CATEGORIES.every((c) => matchApprovedCategory(c.name)?.point === c.point) &&
   APPROVED_CATEGORIES.map((c) => c.point).join('') === '3222111212');
 
+// Approved aliases (explicit list only) → approved category & point
+const aliases: [string, string, number][] = [
+  ['Career Growth & Mobility', 'Career Opportunity', 3], ['Learning & Development', 'Development', 2], ['Leadership Clarity & Direction', 'Clarity & Clear Directions', 2],
+  ['Collaboration & Team Effectiveness', 'Synergy Collaboration & Competent Personnel', 2], ['Employee Experience & Value Proposition', 'Employee Value Proposition', 1],
+  ['Recognition & Rewards', 'Recognition and Retention', 1], ['Workplace Resources & Enablement', 'Infrastructure', 1],
+];
+test('Approved aliases map to the approved category and point', aliases.every(([a, n, p]) => { const c = matchApprovedCategory(a); return c?.name === n && c.point === p; }));
+test('Alias matching is case/whitespace tolerant', matchApprovedCategory('  career growth  &  mobility ')?.name === 'Career Opportunity');
+test('Non-approved similar wording stays UNMAPPED ("Career Growth", "Learning and Development")', matchApprovedCategory('Career Growth') === null && matchApprovedCategory('Learning and Development') === null);
+const al = evaluateEmployeeAlignment('Career Growth & Mobility', 'Learning & Development');
+test('Alias pair scored with the central engine: 3/2 → 90.0% HIGH', al.result?.displayAlignmentScore === '90.0%' && al.status === 'HIGH ALIGNMENT' && al.shortTerm.original === 'Career Growth & Mobility');
+
 // Boundaries (classification on unrounded score)
 test('16. 80.000% → HIGH', classifyAlignment(80) === 'HIGH ALIGNMENT');
 test('17. 79.999% → MEDIUM (displays 80.0%)', classifyAlignment(79.999) === 'MEDIUM ALIGNMENT' && (79.999).toFixed(1) === '80.0');

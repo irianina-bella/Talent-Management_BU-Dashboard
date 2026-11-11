@@ -89,7 +89,7 @@ function HorizonView({ rows, h, total }: { rows: EmpAsp[]; h: Horizon; total: nu
   const catRows = order.filter((c) => cats.has(c)).map((c) => ({ name: c, value: cats.get(c)!.length }));
   const unclassified = cats.get(UNCLASSIFIED)?.length ?? 0;
   const emps = (rs: EmpAsp[]) => rs.map((r) => r.e);
-  const open = (title: string, rs: EmpAsp[]) => openList({ title, subtitle: `${label} aspiration`, employees: emps(rs), columns: ASP_COLUMNS });
+  const open = (title: string, rs: EmpAsp[]) => openList({ title, subtitle: `${label} aspiration`, employees: emps(rs), columns: ASP_COLUMNS, trailing: 'alignment' });
 
   const byOrg = useMemo(() => {
     const units = new Map<string, EmpAsp[]>();
@@ -152,7 +152,7 @@ function HorizonView({ rows, h, total }: { rows: EmpAsp[]; h: Horizon; total: nu
 
 function CompareView({ rows, total }: { rows: EmpAsp[]; total: number }) {
   const { config, openList } = useApp();
-  const open = (title: string, rs: EmpAsp[]) => openList({ title, subtitle: 'Short-term vs long-term aspiration', employees: rs.map((r) => r.e), columns: ASP_COLUMNS });
+  const open = (title: string, rs: EmpAsp[]) => openList({ title, subtitle: 'Short-term vs long-term aspiration', employees: rs.map((r) => r.e), columns: ASP_COLUMNS, trailing: 'alignment' });
   const coverage = COVERAGE.map((c) => ({ name: c, rows: rows.filter((r) => coverageOf(r) === c) }));
   const both = rows.filter((r) => r.pattern);
   const patterns = PATTERNS.map((p) => ({ name: p, rows: both.filter((r) => r.patterns.includes(p)) }));

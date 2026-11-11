@@ -148,7 +148,7 @@ export default function AlignmentPage({ navigate }: { navigate: (p: PageKey) => 
   const open = (title: string, rs: Row[], subtitle?: string) => openList({ title, subtitle, employees: rs.map((r) => r.e), columns: [
     { key: 'employeeName', label: 'Employee Name' }, { key: 'personnelNumber', label: 'Personnel No.' }, { key: 'companyName', label: 'Company' }, { key: 'departmentName', label: 'Department' },
     { key: 'positionName', label: 'Position' }, { key: 'shortTermAspiration', label: 'Short-Term Aspiration' }, { key: 'longTermAspiration', label: 'Long-Term Aspiration' },
-  ] });
+  ], trailing: 'alignment' });
   const byStatus = (st: AlignmentStatus) => rows.filter((r) => r.a.status === st);
 
   const sideDist = (side: 'shortTerm' | 'longTerm') => [

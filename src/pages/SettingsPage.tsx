@@ -5,7 +5,7 @@ import { MappingEditor } from '../components/MappingEditor';
 import { Section, PageHeader, Button, Note, Select, Badge } from '../components/ui';
 import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel, AspirationCategory, DEFAULT_ASPIRATION_CATEGORIES, UNCLASSIFIED } from '../lib/config';
 import { parseEntries } from '../lib/aspiration';
-import { APPROVED_CATEGORIES } from '../analytics/aspirationCategoryMapping';
+import { APPROVED_CATEGORIES, APPROVED_ALIASES } from '../analytics/aspirationCategoryMapping';
 import { HIGH_THRESHOLD, MEDIUM_THRESHOLD, SHORT_TERM_WEIGHT, LONG_TERM_WEIGHT, evaluateEmployeeAlignment } from '../analytics/aspirationAlignment';
 import { Lock } from 'lucide-react';
 import { ColumnMapping, FieldKey } from '../lib/fields';
@@ -246,7 +246,13 @@ export default function SettingsPage() {
                 {APPROVED_CATEGORIES.map((c) => <tr key={c.no}><td className="px-3 py-1.5 tabular-nums text-slate-400">{c.no}</td><td className="px-3 text-navy-900">{c.name}</td><td className="px-3">{c.classification}</td><td className="px-3 text-right font-semibold tabular-nums">{c.point}</td></tr>)}
               </tbody>
             </table>
-            <p className="mt-2 text-[11px] text-slate-500">Matching: exact category name, case-insensitive, extra spaces ignored. No partial matching. Unrecognised values are UNMAPPED and never scored.</p>
+            <div className="mt-4 text-[11px] font-medium uppercase tracking-wide text-slate-500">Approved aliases (source label → approved category)</div>
+            <table className="mt-1 min-w-full overflow-hidden rounded-lg border border-slate-200 text-xs">
+              <tbody className="divide-y divide-slate-100">
+                {Object.entries(APPROVED_ALIASES).map(([a, n]) => { const c = APPROVED_CATEGORIES.find((x) => x.name === n)!; return <tr key={a}><td className="px-3 py-1.5 text-navy-900">{a}</td><td className="px-3 text-slate-400">→</td><td className="px-3">{n}</td><td className="px-3 text-right font-semibold tabular-nums">{c.point}</td></tr>; })}
+              </tbody>
+            </table>
+            <p className="mt-2 text-[11px] text-slate-500">Matching: an exact approved name or an approved alias (ignoring case and extra spaces). No partial or similar-wording matching. Other values are UNMAPPED and never scored.</p>
           </div>
           <div className="space-y-3 text-xs">
             <div className="rounded-lg bg-slate-50 p-3">

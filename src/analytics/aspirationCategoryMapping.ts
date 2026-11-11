@@ -23,7 +23,30 @@ export const categoryKey = (s: string) => s.replace(/[\s ]+/g, ' ').trim().toLo
 
 const BY_KEY = new Map(APPROVED_CATEGORIES.map((c) => [categoryKey(c.name), c]));
 
-/** Returns the approved category for an Excel value, or null when not recognised (UNMAPPED). */
+/**
+ * EXPLICIT, business-approved aliases: source label → approved category name.
+ * Only labels confirmed by the business owner are listed. Similar wording is NEVER matched automatically;
+ * any label not listed here (and not an exact approved name) is UNMAPPED and not scored.
+ */
+export const APPROVED_ALIASES: Readonly<Record<string, string>> = Object.freeze({
+  // Approved by the business owner on 2026-11-11.
+  'Career Growth & Mobility': 'Career Opportunity',
+  'Learning & Development': 'Development',
+  'Leadership Clarity & Direction': 'Clarity & Clear Directions',
+  'Collaboration & Team Effectiveness': 'Synergy Collaboration & Competent Personnel',
+  'Employee Experience & Value Proposition': 'Employee Value Proposition',
+  'Recognition & Rewards': 'Recognition and Retention',
+  'Workplace Resources & Enablement': 'Infrastructure',
+});
+
+const ALIAS_BY_KEY = new Map(Object.entries(APPROVED_ALIASES).map(([alias, name]) => {
+  const target = BY_KEY.get(categoryKey(name));
+  if (!target) throw new Error(`Alias "${alias}" points to unknown approved category "${name}"`);
+  return [categoryKey(alias), target] as const;
+}));
+
+/** Returns the approved category for an Excel value (exact name, then explicit alias), or null when not recognised (UNMAPPED). */
 export function matchApprovedCategory(value: string): ApprovedCategory | null {
-  return BY_KEY.get(categoryKey(value)) ?? null;
+  const k = categoryKey(value);
+  return BY_KEY.get(k) ?? ALIAS_BY_KEY.get(k) ?? null;
 }

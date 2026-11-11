@@ -9,7 +9,7 @@ export const STATUS_STYLE: Record<AlignmentStatus, { bg: string; fg: string; sol
   'MEDIUM ALIGNMENT': { bg: '#FBF0D9', fg: '#7A5A12', solid: '#C9973B' },
   'LOW ALIGNMENT': { bg: '#F8E1DF', fg: '#8A2A23', solid: '#B4443E' },
   'INCOMPLETE DATA': { bg: '#EEF2F6', fg: '#475569', solid: '#94A3B8' },
-  'UNMAPPED CATEGORY': { bg: '#F1E6F0', fg: '#6B3F66', solid: '#8A5A83' },
+  'UNMAPPED CATEGORY': { bg: '#E7EBF0', fg: '#3F4A5A', solid: '#64748B' },
   'NO ASPIRATION DATA': { bg: '#F1F5F9', fg: '#64748B', solid: '#CBD5E1' },
 };
 
