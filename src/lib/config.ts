@@ -69,17 +69,38 @@ export const DEFAULT_CONFIG: AppConfig = {
     rows: 3, cols: 4, xAxis: 'Performance', yAxis: 'Potential',
     rowLabels: ['High Potential', 'Medium Potential', 'Low Potential'],
     colLabels: ['Low', 'Medium', 'High', 'Very High'],
+    // FINAL APPROVED LAYOUT (explicit row/column coordinates; never sorted):
+    //   Row 1: 10 Underutilized / Misplaced · 7 Diamond in the Rough · 3 Emerging Leaders · 1 STAR Leaders
+    //   Row 2: 11 Strugglers · 8 Steady Performer · 4 Growing Talent · 2 Future Leaders
+    //   Row 3: 12 Misfits · 9 Average Worker · 6 Solid Contributor · 5 Experts
     cells: {
-      'Diamond in the Rough': { r: 0, c: 0 }, 'Emerging Leaders': { r: 0, c: 1 }, 'Future Leaders': { r: 0, c: 2 }, 'STAR Leaders': { r: 0, c: 3 },
-      'Strugglers': { r: 1, c: 0 }, 'Steady Performer': { r: 1, c: 1 }, 'Growing Talent': { r: 1, c: 2 }, 'Experts': { r: 1, c: 3 },
-      'Misfits': { r: 2, c: 0 }, 'Average Worker': { r: 2, c: 1 }, 'Solid Contributor': { r: 2, c: 2 }, 'Underutilized / Misplaced': { r: 2, c: 3 },
+      'Underutilized / Misplaced': { r: 0, c: 0 }, 'Diamond in the Rough': { r: 0, c: 1 }, 'Emerging Leaders': { r: 0, c: 2 }, 'STAR Leaders': { r: 0, c: 3 },
+      'Strugglers': { r: 1, c: 0 }, 'Steady Performer': { r: 1, c: 1 }, 'Growing Talent': { r: 1, c: 2 }, 'Future Leaders': { r: 1, c: 3 },
+      'Misfits': { r: 2, c: 0 }, 'Average Worker': { r: 2, c: 1 }, 'Solid Contributor': { r: 2, c: 2 }, 'Experts': { r: 2, c: 3 },
     },
   },
 };
 
 export const DEFAULT_MATRIX: MatrixConfig = DEFAULT_CONFIG.matrix;
 
-const KEY = 'tac.config.v2';
+/** Official 12-box class numbers and colours (keyed by class, so they follow the class wherever it is placed). */
+export const TWELVE_BOX: Record<string, { no: number; bg: string; fg: string; sub: string }> = {
+  'STAR Leaders': { no: 1, bg: '#12305C', fg: '#FFFFFF', sub: '#D3DDEC' },
+  'Future Leaders': { no: 2, bg: '#1A62C2', fg: '#FFFFFF', sub: '#EAF2FD' },
+  'Emerging Leaders': { no: 3, bg: '#8FD8EA', fg: '#0B2E3A', sub: '#1D4E5E' },
+  'Growing Talent': { no: 4, bg: '#A9CBEE', fg: '#0B2545', sub: '#23426B' },
+  'Experts': { no: 5, bg: '#145C2A', fg: '#FFFFFF', sub: '#D7F0DD' },
+  'Solid Contributor': { no: 6, bg: '#2B7F3B', fg: '#FFFFFF', sub: '#EEF9F0' },
+  'Diamond in the Rough': { no: 7, bg: '#E8B53E', fg: '#3A2A00', sub: '#5C4508' },
+  'Steady Performer': { no: 8, bg: '#BFE5AC', fg: '#1F3D14', sub: '#335C24' },
+  'Average Worker': { no: 9, bg: '#7CC67F', fg: '#0F2E12', sub: '#1E4A22' },
+  'Underutilized / Misplaced': { no: 10, bg: '#F6D34E', fg: '#3A2E00', sub: '#5C4A08' },
+  'Strugglers': { no: 11, bg: '#C6312B', fg: '#FFFFFF', sub: '#FDEEEE' },
+  'Misfits': { no: 12, bg: '#8E2A20', fg: '#FFFFFF', sub: '#F6D9D6' },
+};
+
+// v3: approved 12-box layout. Older saved layouts are ignored so the approved default always applies.
+const KEY = 'tac.config.v3';
 
 export function loadConfig(): AppConfig {
   try {

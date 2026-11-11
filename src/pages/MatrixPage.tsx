@@ -1,19 +1,21 @@
 import { useMemo } from 'react';
-import { ArrowUp, ArrowDown, Settings } from 'lucide-react';
+import { ArrowUp, ArrowDown, Settings, Users, Gem, Sprout, Star, AlertTriangle, BarChart3, TrendingUp, XCircle, GraduationCap } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { FilterBar } from '../components/FilterBar';
 import { Section, PageHeader, Button, Note } from '../components/ui';
 import type { TableCol } from '../components/EmployeeTable';
-import { compareRank, matchMatrixLabel } from '../lib/config';
+import { compareRank, matchMatrixLabel, TWELVE_BOX } from '../lib/config';
 import { Employee, NA } from '../lib/model';
 import type { PageKey } from '../components/Layout';
 
-/** Professional 12-box palette: rows = potential (top = high), cols = performance (left = low). */
-const PALETTE: { bg: string; fg: string; sub: string }[][] = [
-  [{ bg: '#F6E7B4', fg: '#5C4A0E', sub: '#7A6520' }, { bg: '#BFE6E3', fg: '#0B3D3B', sub: '#245F5C' }, { bg: '#14A9A4', fg: '#FFFFFF', sub: '#E3F7F6' }, { bg: '#0B5E4A', fg: '#FFFFFF', sub: '#CFEDE4' }],
-  [{ bg: '#F7D2B8', fg: '#6B2E0B', sub: '#86441E' }, { bg: '#D6E2F2', fg: '#13294B', sub: '#2C4F80' }, { bg: '#5B7BA6', fg: '#FFFFFF', sub: '#E5ECF6' }, { bg: '#1E3A64', fg: '#FFFFFF', sub: '#D3DDEC' }],
-  [{ bg: '#E9B4AF', fg: '#5E1712', sub: '#7D2A24' }, { bg: '#E5E9EF', fg: '#334155', sub: '#475569' }, { bg: '#CDE8D2', fg: '#1F4D2B', sub: '#2F6A3E' }, { bg: '#F3E08A', fg: '#5C4A0E', sub: '#6E5A16' }],
-];
+/** Approved icons per talent class. (Lucide has no "User Round Up"; TrendingUp is used for Future Leaders.) */
+const ICONS: Record<string, LucideIcon> = {
+  'Underutilized / Misplaced': Users, 'Diamond in the Rough': Gem, 'Emerging Leaders': Sprout, 'STAR Leaders': Star,
+  'Strugglers': AlertTriangle, 'Steady Performer': BarChart3, 'Growing Talent': Users, 'Future Leaders': TrendingUp,
+  'Misfits': XCircle, 'Average Worker': Users, 'Solid Contributor': Settings, 'Experts': GraduationCap,
+};
+const FALLBACK = { no: 0, bg: '#E2E8F0', fg: '#0B1F3A', sub: '#475569' };
 
 export const MATRIX_LIST_COLUMNS: TableCol[] = [
   { key: 'employeeName', label: 'Employee Name' },
@@ -23,10 +25,7 @@ export const MATRIX_LIST_COLUMNS: TableCol[] = [
   { key: 'directorateName', label: 'Directorate' },
   { key: 'divisionName', label: 'Division' },
   { key: 'departmentName', label: 'Department' },
-  { key: 'positionName', label: 'Position' },
-  { key: 'talent12Box', label: 'Talent Class' },
-  { key: 'talentCY', label: 'Talent CY', flag: true },
-  { key: 'calibCY', label: 'Calib CY', flag: true },
+  { key: 'positionName', label: 'Position Name' },
 ];
 
 export default function MatrixPage({ navigate }: { navigate: (p: PageKey) => void }) {
@@ -56,7 +55,7 @@ export default function MatrixPage({ navigate }: { navigate: (p: PageKey) => voi
 
   const labelAt = (r: number, c: number) => Object.keys(mx.cells).filter((l) => mx.cells[l].r === r && mx.cells[l].c === c);
   const placedCount = [...byLabel.values()].reduce((s, es) => s + es.length, 0);
-  const pctOf = (n: number) => (total ? `${((n / total) * 100).toFixed(1)}%` : '0%');
+  const pctOf = (n: number, t: number) => (t ? `${((n / t) * 100).toFixed(1)}%` : '0%');
   const open = (title: string, employees: Employee[], subtitle: string) => openList({ title, subtitle, employees, columns: MATRIX_LIST_COLUMNS });
 
   return (
@@ -65,7 +64,7 @@ export default function MatrixPage({ navigate }: { navigate: (p: PageKey) => voi
         actions={<Button variant="secondary" onClick={() => navigate('settings')}><Settings size={15} />Edit matrix mapping</Button>} />
       <FilterBar showYear={false} />
 
-      <Section title="Talent Matrix" subtitle={`${placedCount.toLocaleString()} of ${total.toLocaleString()} employees placed · click a box to see the employees · % of total employees in scope`}>
+      <Section title="Talent Matrix" subtitle={`${placedCount.toLocaleString()} of ${total.toLocaleString()} employees placed · click a box to see its employees`}>
         <div className="overflow-x-auto pb-2">
           <div className="min-w-[760px]">
             <div className="flex">
@@ -82,33 +81,33 @@ export default function MatrixPage({ navigate }: { navigate: (p: PageKey) => voi
                 ))}
               </div>
               {/* Grid */}
-              <div className="grid flex-1 gap-1.5 rounded-lg bg-white" style={{ gridTemplateColumns: `repeat(${mx.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${mx.rows}, 9rem)` }} role="grid" aria-label="12 Box Talent Matrix">
+              <div className="grid flex-1 gap-1.5 rounded-lg bg-white" style={{ gridTemplateColumns: `repeat(${mx.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${mx.rows}, 10.5rem)` }} role="grid" aria-label="12 Box Talent Matrix">
                 {Array.from({ length: mx.rows }).flatMap((_, r) => Array.from({ length: mx.cols }).map((__, c) => {
                   const labels = labelAt(r, c);
                   const es = labels.flatMap((l) => byLabel.get(l) || []);
-                  const tone = PALETTE[r]?.[c] ?? { bg: '#F1F5F9', fg: '#0B1F3A', sub: '#475569' };
+                  const name = labels.length ? labels.join(' / ') : '—';
+                  const meta = (labels.length === 1 && TWELVE_BOX[labels[0]]) || FALLBACK;
+                  const Icon = labels.length === 1 ? ICONS[labels[0]] : undefined;
                   const up = es.filter((e) => compareRank(config.ranks.talent, e.v.talentLY, e.v.talentCY) === 'Upgrade').length;
                   const down = es.filter((e) => compareRank(config.ranks.talent, e.v.talentLY, e.v.talentCY) === 'Downgrade').length;
-                  const name = labels.length ? labels.join(' / ') : '—';
                   return (
                     <button key={`${r}-${c}`} role="gridcell"
-                      onClick={() => open(name, es, `${mx.rowLabels[r] ?? ''} · ${mx.colLabels[c] ?? ''} ${mx.xAxis}`)}
-                      className="group relative flex h-full flex-col justify-between rounded-md p-3 text-left transition hover:ring-2 hover:ring-navy-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-900"
-                      style={{ background: tone.bg, color: tone.fg }}
-                      title={`${name}: ${es.length} employees (${pctOf(es.length)})`}>
-                      <div className="text-[13px] font-bold leading-tight">{name}</div>
-                      <div className="flex items-end justify-between gap-2">
-                        <div>
-                          <div className="text-3xl font-bold leading-none tabular-nums">{es.length}</div>
-                          <div className="mt-1 text-[11px] font-medium" style={{ color: tone.sub }}>{es.length === 1 ? 'Employee' : 'Employees'} · <span className="font-bold tabular-nums">{pctOf(es.length)}</span></div>
-                        </div>
-                        {(up > 0 || down > 0) && (
-                          <div className="flex flex-col items-end gap-0.5 text-[10px] font-semibold" title="Talent flag movement last year → current year">
-                            {up > 0 && <span className="flex items-center rounded bg-white/85 px-1 text-emerald-700"><ArrowUp size={10} />{up}</span>}
-                            {down > 0 && <span className="flex items-center rounded bg-white/85 px-1 text-red-700"><ArrowDown size={10} />{down}</span>}
-                          </div>
-                        )}
+                      onClick={() => open(meta.no ? `${meta.no}. ${name}` : name, es, `${mx.rowLabels[r] ?? ''} · ${mx.colLabels[c] ?? ''} ${mx.xAxis}`)}
+                      className="relative flex h-full flex-col items-center justify-center rounded-lg border border-black/10 px-2 text-center shadow-sm transition hover:ring-2 hover:ring-navy-900 hover:ring-offset-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-900"
+                      style={{ background: meta.bg, color: meta.fg }}
+                      title={`${meta.no ? meta.no + '. ' : ''}${name}: ${es.length} employees (${pctOf(es.length, total)})`}>
+                      {Icon && <Icon size={22} strokeWidth={2} aria-hidden="true" />}
+                      {meta.no > 0 && <div className="mt-1 text-[26px] font-extrabold leading-none tabular-nums">{meta.no}</div>}
+                      <div className="mt-1 text-[13px] font-bold leading-tight">{name}</div>
+                      <div className="mt-1.5 text-[11px] font-medium leading-tight" style={{ color: meta.sub }}>
+                        <span className="font-bold tabular-nums">{es.length}</span> {es.length === 1 ? 'Employee' : 'Employees'} · <span className="font-bold tabular-nums">{pctOf(es.length, total)}</span>
                       </div>
+                      {(up > 0 || down > 0) && (
+                        <div className="absolute right-1.5 top-1.5 flex gap-0.5 text-[10px] font-semibold" title="Talent flag movement last year → current year">
+                          {up > 0 && <span className="flex items-center rounded bg-white/90 px-1 text-emerald-700"><ArrowUp size={10} />{up}</span>}
+                          {down > 0 && <span className="flex items-center rounded bg-white/90 px-1 text-red-700"><ArrowDown size={10} />{down}</span>}
+                        </div>
+                      )}
                     </button>
                   );
                 }))}
@@ -135,7 +134,7 @@ export default function MatrixPage({ navigate }: { navigate: (p: PageKey) => voi
             </div>
           </div>
         </div>
-        <p className="mt-3 text-[11px] text-slate-400">Percentage = employees in box ÷ total employees in the current filter ({total.toLocaleString()}) × 100. ↑/↓ = talent flag movement from last year.</p>
+        <p className="mt-3 text-[11px] text-slate-400">Percentage = employees in box ÷ total employees in the current filter ({total.toLocaleString()}) × 100. Box positions follow the approved 12-box layout and are never sorted. ↑/↓ = talent flag movement from last year.</p>
       </Section>
 
       {unplaced.size > 0 && (

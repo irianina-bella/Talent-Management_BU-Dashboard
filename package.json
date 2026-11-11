@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run test:alignment && tsc --noEmit -p tsconfig.json && vite build",
+    "build": "npm run test:alignment && npm run test:matrix && tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test:alignment": "esbuild tests/aspirationAlignment.test.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/alignment.test.cjs && node node_modules/.cache/alignment.test.cjs"
+    "test:alignment": "esbuild tests/aspirationAlignment.test.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/alignment.test.cjs && node node_modules/.cache/alignment.test.cjs",
+    "test:matrix": "esbuild tests/matrix.test.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/matrix.test.cjs && node node_modules/.cache/matrix.test.cjs"
   },
   "dependencies": {
     "html-to-image": "1.11.13",

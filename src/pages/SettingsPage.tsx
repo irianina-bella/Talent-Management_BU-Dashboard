@@ -3,7 +3,7 @@ import { ArrowUp, ArrowDown, X, Plus, RotateCcw, Save } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { MappingEditor } from '../components/MappingEditor';
 import { Section, PageHeader, Button, Note, Select, Badge } from '../components/ui';
-import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel, AspirationCategory, DEFAULT_ASPIRATION_CATEGORIES, UNCLASSIFIED } from '../lib/config';
+import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel, AspirationCategory, DEFAULT_ASPIRATION_CATEGORIES, UNCLASSIFIED, TWELVE_BOX } from '../lib/config';
 import { parseEntries } from '../lib/aspiration';
 import { APPROVED_CATEGORIES, APPROVED_ALIASES } from '../analytics/aspirationCategoryMapping';
 import { HIGH_THRESHOLD, MEDIUM_THRESHOLD, SHORT_TERM_WEIGHT, LONG_TERM_WEIGHT, evaluateEmployeeAlignment } from '../analytics/aspirationAlignment';
@@ -142,7 +142,9 @@ function MatrixEditor({ dataValues, mx, onChange }: { dataValues: string[]; mx: 
           <div className="grid flex-1 gap-1.5" style={{ gridTemplateColumns: `repeat(${mx.cols}, minmax(0,1fr))`, gridTemplateRows: `repeat(${mx.rows}, 4.5rem)` }}>
             {Array.from({ length: mx.rows }).flatMap((_, r) => Array.from({ length: mx.cols }).map((__, c) => {
               const here = Object.entries(mx.cells).filter(([, p]) => p.r === r && p.c === c).map(([l]) => l);
-              return <div key={`${r}${c}`} className={`flex items-center justify-center rounded-md border p-1 text-center text-[11px] font-medium ${here.length ? 'border-teal-500 bg-teal-50 text-navy-900' : 'border-dashed border-slate-300 text-slate-300'}`}>{here.join(' / ') || 'empty'}</div>;
+              const m = here.length === 1 ? TWELVE_BOX[here[0]] : undefined;
+              return <div key={`${r}${c}`} className={`flex items-center justify-center rounded-md border p-1 text-center text-[11px] font-semibold ${here.length ? 'border-black/10' : 'border-dashed border-slate-300 text-slate-300'}`}
+                style={m ? { background: m.bg, color: m.fg } : undefined}>{here.map((l) => `${TWELVE_BOX[l] ? TWELVE_BOX[l].no + '. ' : ''}${l}`).join(' / ') || 'empty'}</div>;
             }))}
           </div>
         </div>
@@ -289,7 +291,7 @@ export default function SettingsPage() {
         <AspirationEditor cats={draft.aspirationCategories} onChange={(c) => setDraft({ ...draft, aspirationCategories: c })} employees={employees} />
       </Section>
 
-      <Section title="12 Box matrix mapping" subtitle="Default: standard 3 × 4 layout (Potential High/Medium/Low × Performance Low/Medium/High/Very High). Change any assignment or reset to the default.">
+      <Section title="12 Box matrix mapping" subtitle="Default = approved layout: Row 1: 10 · 7 · 3 · 1 — Row 2: 11 · 8 · 4 · 2 — Row 3: 12 · 9 · 6 · 5. “Reset to default mapping” always restores exactly this arrangement.">
         <MatrixEditor dataValues={boxLabels} mx={draft.matrix} onChange={(m) => setDraft({ ...draft, matrix: m })} />
       </Section>
 
