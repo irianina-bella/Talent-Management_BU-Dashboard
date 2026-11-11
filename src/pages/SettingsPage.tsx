@@ -3,7 +3,8 @@ import { ArrowUp, ArrowDown, X, Plus, RotateCcw, Save } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { MappingEditor } from '../components/MappingEditor';
 import { Section, PageHeader, Button, Note, Select, Badge } from '../components/ui';
-import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel } from '../lib/config';
+import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel, AspirationCategory, DEFAULT_ASPIRATION_CATEGORIES, UNCLASSIFIED } from '../lib/config';
+import { parseEntries } from '../lib/aspiration';
 import { ColumnMapping, FieldKey } from '../lib/fields';
 import { Employee } from '../lib/model';
 
@@ -154,6 +155,52 @@ function MatrixEditor({ dataValues, mx, onChange }: { dataValues: string[]; mx: 
   );
 }
 
+function AspirationEditor({ cats, onChange, employees }: { cats: AspirationCategory[]; onChange: (c: AspirationCategory[]) => void; employees: Employee[] }) {
+  const set = (i: number, patch: Partial<AspirationCategory>) => onChange(cats.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const move = (i: number, d: -1 | 1) => { const a = [...cats]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; onChange(a); };
+  const unclassified = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of employees) for (const k of ['shortTermAspiration', 'longTermAspiration'] as FieldKey[])
+      for (const x of parseEntries(e.v[k], cats)) if (x.category === UNCLASSIFIED) m.set(x.original, (m.get(x.original) || 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25);
+  }, [employees, cats]);
+  return (
+    <div className="grid gap-6 xl:grid-cols-3">
+      <div className="space-y-2 xl:col-span-2">
+        {cats.map((c, i) => (
+          <div key={i} className="rounded-lg border border-slate-200 p-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-5 text-right text-xs tabular-nums text-slate-400">{i + 1}.</span>
+              <input className="h-8 min-w-0 flex-1 rounded-md border border-slate-300 px-2 text-xs font-medium" value={c.name} onChange={(e) => set(i, { name: e.target.value })} aria-label="Category name" />
+              <select className="h-8 rounded-md border border-slate-300 px-1.5 text-xs" value={c.kind} onChange={(e) => set(i, { kind: e.target.value as 'level' | 'function' })} aria-label="Category type">
+                <option value="level">Level / leadership</option><option value="function">Function</option>
+              </select>
+              <button onClick={() => move(i, -1)} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Move up"><ArrowUp size={13} /></button>
+              <button onClick={() => move(i, 1)} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Move down"><ArrowDown size={13} /></button>
+              <button onClick={() => onChange(cats.filter((_, j) => j !== i))} className="rounded p-1 text-slate-500 hover:bg-slate-100" aria-label="Remove category"><X size={13} /></button>
+            </div>
+            <textarea key={`${i}-${c.keywords.join('|')}`} className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-700" rows={2} defaultValue={c.keywords.join(', ')}
+              onBlur={(e) => set(i, { keywords: e.target.value.split(',').map((w) => w.trim()).filter(Boolean) })} aria-label={`Keywords for ${c.name}`} placeholder="Keywords or phrases, comma-separated" />
+          </div>
+        ))}
+        <div className="flex gap-2">
+          <Button variant="secondary" className="!py-1.5 text-xs" onClick={() => onChange([...cats, { name: 'New category', kind: 'function', keywords: [] }])}><Plus size={13} />Add category</Button>
+          <Button variant="secondary" className="!py-1.5 text-xs" onClick={() => onChange(DEFAULT_ASPIRATION_CATEGORIES)}><RotateCcw size={13} />Reset to default categories</Button>
+        </div>
+      </div>
+      <div>
+        <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-amber-700">Unclassified aspiration texts in your data</div>
+        {unclassified.length ? (
+          <ul className="max-h-96 space-y-1 overflow-y-auto text-xs">
+            {unclassified.map(([t, n]) => <li key={t} className="flex justify-between gap-2 rounded bg-slate-50 px-2 py-1"><span className="text-slate-700">{t}</span><span className="tabular-nums text-slate-400">{n}</span></li>)}
+          </ul>
+        ) : <p className="text-xs text-slate-400">{employees.length ? 'Every aspiration entry matches a category.' : 'Upload a dataset to see unclassified texts.'}</p>}
+        <p className="mt-3 text-[11px] text-slate-500">Rules: categories are checked top to bottom and the first keyword match wins. Matching ignores case and punctuation, on whole words only. Different job titles are grouped only if you add their keywords. Cells with several entries (separated by new line, ";", "," or "|") are analysed per entry. Blank, N/A, #N/A and "-" count as no aspiration.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { raw, mapping, updateMapping, employees, config, setConfig } = useApp();
   const [draftMap, setDraftMap] = useState<ColumnMapping | null>(mapping);
@@ -185,6 +232,10 @@ export default function SettingsPage() {
             <RankEditor key={d.key} dim={d.key} values={valuesFor(employees, d.key)} order={draft.ranks[d.key]} onChange={(o) => setDraft({ ...draft, ranks: { ...draft.ranks, [d.key]: o } })} />
           ))}
         </div>
+      </Section>
+
+      <Section title="Career aspiration categories" subtitle="Keyword rules used to group CONV-Short / Long Term Aspiration text. The original text is always kept and shown alongside the category.">
+        <AspirationEditor cats={draft.aspirationCategories} onChange={(c) => setDraft({ ...draft, aspirationCategories: c })} employees={employees} />
       </Section>
 
       <Section title="12 Box matrix mapping" subtitle="Default: standard 3 × 4 layout (Potential High/Medium/Low × Performance Low/Medium/High/Very High). Change any assignment or reset to the default.">

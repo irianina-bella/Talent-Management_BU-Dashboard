@@ -7,6 +7,7 @@ import { fmtNum, perfTrend } from '../lib/analytics';
 import { Modal, Button, Badge } from './ui';
 import { EmployeeTable } from './EmployeeTable';
 import { FieldKey, FIELD_BY_KEY } from '../lib/fields';
+import { parseEntries } from '../lib/aspiration';
 
 const d = (e: Employee, k: FieldKey) => display(e.v[k]);
 
@@ -179,6 +180,23 @@ export function ProfileModal() {
           <p className="whitespace-pre-line text-xs text-slate-700">{d(e, 'strength')}</p>
           <h4 className="mb-1 mt-3 text-[11px] font-semibold uppercase tracking-wider text-teal-700">Weakness</h4>
           <p className="whitespace-pre-line text-xs text-slate-700">{d(e, 'weakness')}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-lg border border-slate-200 p-4">
+        <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-teal-700">Career Aspiration</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          {([['Short-Term Aspiration', 'shortTermAspiration', 'shortTermOriginal'], ['Long-Term Aspiration', 'longTermAspiration', 'longTermOriginal']] as [string, FieldKey, FieldKey][]).map(([label, conv, orig]) => {
+            const ents = parseEntries(e.v[conv], config.aspirationCategories);
+            return (
+              <div key={conv}>
+                <div className="text-xs font-semibold text-navy-900">{label}</div>
+                <p className="mt-1 whitespace-pre-line text-sm text-slate-800">{d(e, conv)}</p>
+                {ents.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{ents.map((x, i) => <Badge key={i} tone={x.category === 'Other / Unclassified' ? 'amber' : 'teal'}>{x.category}{x.fn !== 'Other / Unclassified' && x.fn !== x.category ? ` · ${x.fn}` : ''}</Badge>)}</div>}
+                {e.v[orig] && e.v[orig] !== e.v[conv] && <p className="mt-1.5 text-[11px] text-slate-400">Original ({FIELD_BY_KEY[orig].header}): {e.v[orig]}</p>}
+              </div>
+            );
+          })}
         </div>
       </div>
 

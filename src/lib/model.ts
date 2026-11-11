@@ -48,6 +48,10 @@ export interface ImportResult {
 
 export const NA = 'N/A';
 
+/** Placeholder values that mean "no aspiration recorded" (N/A, #N/A, -, blank…). */
+export const MISSING_TOKEN = /^(n\/?a|#n\/a|-+|–|—|none|nil|null|0|tidak ada|belum ada)$/i;
+export const ASPIRATION_KEYS: FieldKey[] = ['shortTermOriginal', 'shortTermAspiration', 'longTermOriginal', 'longTermAspiration'];
+
 export function display(v: string | null | undefined): string {
   if (v === null || v === undefined) return NA;
   const t = String(v).trim();
@@ -111,6 +115,7 @@ export function buildEmployees(raw: RawDataset, mapping: ColumnMapping): ImportR
     for (const k of FIELD_KEYS) {
       const idx = mapping[k];
       v[k] = idx === null || idx === undefined ? '' : String(r[idx] ?? '').trim();
+      if (ASPIRATION_KEYS.includes(k) && MISSING_TOKEN.test(v[k])) v[k] = ''; // source row itself is untouched
       if (idx !== null && v[k] === '') missingByField[k]++;
     }
     const pn = v.personnelNumber;

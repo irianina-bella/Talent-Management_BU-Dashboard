@@ -24,6 +24,7 @@ export const FIELD_KEYS = [
   'reviewerNik', 'reviewerName', 'lastChange',
   'y1Year', 'y1Scale', 'y1Score', 'y2Year', 'y2Scale', 'y2Score', 'y3Year', 'y3Scale', 'y3Score',
   'path', 'education', 'strength', 'weakness', 'tlClassCalibration', 'talent12Box', 'talentCluster', 'talentCategory', 'cLevel',
+  'shortTermOriginal', 'shortTermAspiration', 'longTermOriginal', 'longTermAspiration',
 ] as const;
 
 export type FieldKey = (typeof FIELD_KEYS)[number];
@@ -75,6 +76,11 @@ export const FIELDS: FieldDef[] = [
   { key: 'talentCluster', label: 'Talent Cluster', header: 'Talent Cluster Text', type: 'text', group: 'Talent' },
   { key: 'talentCategory', label: 'Talent Category', header: 'Talent Category', type: 'text', group: 'Talent' },
   { key: 'cLevel', label: 'C-Level', header: 'C-Level', type: 'text', group: 'Organization' },
+  // Career aspiration: the CONV- (converted) columns are the primary analytical source; originals are kept for reference.
+  { key: 'shortTermOriginal', label: 'Short Term (original)', header: 'Short Term', type: 'text', group: 'Career Aspiration' },
+  { key: 'shortTermAspiration', label: 'Short-Term Aspiration (CONV)', header: 'CONV-Short Term Aspiration', type: 'text', group: 'Career Aspiration' },
+  { key: 'longTermOriginal', label: 'Long Term (original)', header: 'Long Term', type: 'text', group: 'Career Aspiration' },
+  { key: 'longTermAspiration', label: 'Long-Term Aspiration (CONV)', header: 'CONV-Long Term Aspiration', type: 'text', group: 'Career Aspiration' },
 ];
 
 export const FIELD_BY_KEY: Record<FieldKey, FieldDef> = Object.fromEntries(FIELDS.map((f) => [f.key, f])) as Record<FieldKey, FieldDef>;

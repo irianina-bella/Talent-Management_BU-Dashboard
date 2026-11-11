@@ -16,6 +16,7 @@ import EmployeesPage from './pages/EmployeesPage';
 import SettingsPage from './pages/SettingsPage';
 import DistributionPage from './pages/DistributionPage';
 import RiskPage from './pages/RiskPage';
+import AspirationPage from './pages/AspirationPage';
 
 class ErrorBoundary extends Component<{ children: ReactNode; resetKey: string }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -51,7 +52,7 @@ function Shell() {
   const setPage = (p: PageKey) => { window.location.hash = `/${p}`; setPageState(p); window.scrollTo(0, 0); };
 
   const needsData = !['data', 'settings'].includes(page) && employees.length === 0;
-  const pages: Record<PageKey, React.ComponentType<{ navigate: (p: PageKey) => void }>> = { overview: OverviewPage, distribution: DistributionPage, risk: RiskPage, calibration: CalibrationPage, matrix: MatrixPage, succession: SuccessionPage, performance: PerformancePage, organization: OrganizationPage, movement: MovementPage, employees: EmployeesPage, data: DataPage, settings: SettingsPage };
+  const pages: Record<PageKey, React.ComponentType<{ navigate: (p: PageKey) => void }>> = { overview: OverviewPage, distribution: DistributionPage, risk: RiskPage, aspiration: AspirationPage, calibration: CalibrationPage, matrix: MatrixPage, succession: SuccessionPage, performance: PerformancePage, organization: OrganizationPage, movement: MovementPage, employees: EmployeesPage, data: DataPage, settings: SettingsPage };
   const Page = pages[page];
 
   return (

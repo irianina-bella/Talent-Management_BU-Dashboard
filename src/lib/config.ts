@@ -24,11 +24,36 @@ export interface MatrixConfig {
   cells: Record<string, { r: number; c: number }>;
 }
 
+export interface AspirationCategory {
+  name: string;
+  /** 'level' = seniority/leadership categories, 'function' = functional areas. */
+  kind: 'level' | 'function';
+  /** Case-insensitive whole-word keywords / phrases. */
+  keywords: string[];
+}
+
 export interface AppConfig {
   /** Highest rank first. Values not listed are "unranked" and excluded from upgrade/downgrade. */
   ranks: Record<RankDimension, string[]>;
   matrix: MatrixConfig;
+  /** Ordered: the first matching category wins. Unmatched text → "Other / Unclassified". */
+  aspirationCategories: AspirationCategory[];
 }
+
+export const UNCLASSIFIED = 'Other / Unclassified';
+
+export const DEFAULT_ASPIRATION_CATEGORIES: AspirationCategory[] = [
+  { name: 'Leadership / C-Level', kind: 'level', keywords: ['chief', 'ceo', 'cfo', 'coo', 'cto', 'cio', 'chro', 'cmo', 'c-level', 'c level', 'president director', 'presiden direktur', 'direktur utama', 'board of directors', 'bod'] },
+  { name: 'General Management', kind: 'level', keywords: ['general manager', 'gm', 'general management', 'business unit head', 'bu head', 'country manager', 'site manager', 'branch manager'] },
+  { name: 'Director / Functional Head', kind: 'level', keywords: ['director', 'direktur', 'head of', 'head', 'kepala', 'vp', 'vice president', 'division head', 'div head', 'div. head', 'department head', 'dept head', 'dept. head'] },
+  { name: 'Finance', kind: 'function', keywords: ['finance', 'financial', 'accounting', 'accountant', 'akuntansi', 'keuangan', 'tax', 'treasury', 'controller', 'budget', 'fp&a'] },
+  { name: 'Human Resources', kind: 'function', keywords: ['hr', 'hrbp', 'human resource', 'human resources', 'human capital', 'sdm', 'talent', 'people', 'recruitment', 'learning', 'compensation', 'organization development', 'od'] },
+  { name: 'Operations', kind: 'function', keywords: ['operation', 'operations', 'operasional', 'production', 'produksi', 'plant', 'mining', 'mine', 'maintenance', 'supply chain', 'logistic', 'logistics', 'procurement', 'engineering', 'project'] },
+  { name: 'Commercial / Sales', kind: 'function', keywords: ['sales', 'commercial', 'marketing', 'trading', 'customer', 'account manager', 'key account'] },
+  { name: 'Strategy / Business Development', kind: 'function', keywords: ['strategy', 'strategic', 'business development', 'corporate planning', 'planning', 'investment', 'm&a', 'expansion', 'transformation'] },
+  { name: 'Technology / Digital', kind: 'function', keywords: ['it', 'ict', 'information technology', 'digital', 'technology', 'data', 'software', 'system', 'systems'] },
+  { name: 'Risk / Compliance', kind: 'function', keywords: ['risk', 'compliance', 'audit', 'auditor', 'legal', 'governance', 'gcg', 'internal control', 'hse', 'safety'] },
+];
 
 export const DEFAULT_CONFIG: AppConfig = {
   ranks: {
@@ -39,6 +64,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     talentCluster: [],
     talentCategory: [],
   },
+  aspirationCategories: DEFAULT_ASPIRATION_CATEGORIES,
   matrix: {
     rows: 3, cols: 4, xAxis: 'Performance', yAxis: 'Potential',
     rowLabels: ['High Potential', 'Medium Potential', 'Low Potential'],
@@ -62,6 +88,7 @@ export function loadConfig(): AppConfig {
     const p = JSON.parse(s) as Partial<AppConfig>;
     return {
       ranks: { ...DEFAULT_CONFIG.ranks, ...(p.ranks || {}) },
+      aspirationCategories: Array.isArray(p.aspirationCategories) && p.aspirationCategories.length ? p.aspirationCategories : DEFAULT_ASPIRATION_CATEGORIES,
       matrix: p.matrix && p.matrix.cells && Object.keys(p.matrix.cells).length ? { ...DEFAULT_CONFIG.matrix, ...p.matrix } : DEFAULT_CONFIG.matrix,
     };
   } catch {
