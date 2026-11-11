@@ -136,6 +136,11 @@ export function autoMap(headers: string[]): ColumnMapping {
     mapping[f.key] = idx >= 0 ? idx : null;
     if (idx >= 0) used.add(idx);
   }
+  // Fallback by column position ONLY when the header cell itself is blank: AT (index 45) and AV (index 47).
+  const POSITION_FALLBACK: [FieldKey, number][] = [['shortTermAspiration', 45], ['longTermAspiration', 47]];
+  for (const [k, i] of POSITION_FALLBACK) {
+    if (mapping[k] === null && i < headers.length && !headers[i].trim() && !used.has(i)) { mapping[k] = i; used.add(i); }
+  }
   return mapping;
 }
 

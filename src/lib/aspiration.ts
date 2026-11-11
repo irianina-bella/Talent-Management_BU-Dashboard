@@ -2,6 +2,7 @@
 // categories come only from the user-configurable keyword rules (no inferred equivalences).
 import { Employee } from './model';
 import { AspirationCategory, UNCLASSIFIED } from './config';
+import { APPROVED_CATEGORIES, matchApprovedCategory } from '../analytics/aspirationCategoryMapping';
 
 export type Horizon = 'short' | 'long';
 export const HORIZON_FIELD = { short: 'shortTermAspiration', long: 'longTermAspiration' } as const;
@@ -35,7 +36,13 @@ function compiled(cats: AspirationCategory[]) {
   return c;
 }
 
+/** Display order: the 10 approved aspiration categories first, then keyword categories, then Unclassified. */
+export const categoryOrder = (cats: AspirationCategory[]) => [...APPROVED_CATEGORIES.map((c) => c.name), ...cats.map((c) => c.name), UNCLASSIFIED];
+
 export function categorize(text: string, cats: AspirationCategory[]): { category: string; fn: string } {
+  // Values that exactly match an approved aspiration category (the CONV- columns) keep that category.
+  const approved = matchApprovedCategory(text);
+  if (approved) return { category: approved.name, fn: approved.name };
   const t = normalizeText(text);
   const c = compiled(cats);
   const hit = c.find((k) => k.re && k.re.test(t));

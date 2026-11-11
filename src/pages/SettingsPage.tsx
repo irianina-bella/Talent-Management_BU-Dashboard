@@ -5,6 +5,9 @@ import { MappingEditor } from '../components/MappingEditor';
 import { Section, PageHeader, Button, Note, Select, Badge } from '../components/ui';
 import { AppConfig, DEFAULT_CONFIG, DEFAULT_MATRIX, RANK_DIMENSIONS, RankDimension, MatrixConfig, matchMatrixLabel, AspirationCategory, DEFAULT_ASPIRATION_CATEGORIES, UNCLASSIFIED } from '../lib/config';
 import { parseEntries } from '../lib/aspiration';
+import { APPROVED_CATEGORIES } from '../analytics/aspirationCategoryMapping';
+import { HIGH_THRESHOLD, MEDIUM_THRESHOLD, SHORT_TERM_WEIGHT, LONG_TERM_WEIGHT, evaluateEmployeeAlignment } from '../analytics/aspirationAlignment';
+import { Lock } from 'lucide-react';
 import { ColumnMapping, FieldKey } from '../lib/fields';
 import { Employee } from '../lib/model';
 
@@ -232,6 +235,48 @@ export default function SettingsPage() {
             <RankEditor key={d.key} dim={d.key} values={valuesFor(employees, d.key)} order={draft.ranks[d.key]} onChange={(o) => setDraft({ ...draft, ranks: { ...draft.ranks, [d.key]: o } })} />
           ))}
         </div>
+      </Section>
+
+      <Section title="Employee Aspiration Alignment — approved rules" subtitle="Final, approved business rules. Read-only: they cannot be changed from the application." png={false}>
+        <div className="grid gap-6 xl:grid-cols-3">
+          <div className="xl:col-span-2">
+            <table className="min-w-full overflow-hidden rounded-lg border border-slate-200 text-xs">
+              <thead className="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th className="px-3 py-2 text-left">No.</th><th className="px-3 text-left">Employee Aspiration Category</th><th className="px-3 text-left">Classification</th><th className="px-3 text-right">Point</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {APPROVED_CATEGORIES.map((c) => <tr key={c.no}><td className="px-3 py-1.5 tabular-nums text-slate-400">{c.no}</td><td className="px-3 text-navy-900">{c.name}</td><td className="px-3">{c.classification}</td><td className="px-3 text-right font-semibold tabular-nums">{c.point}</td></tr>)}
+              </tbody>
+            </table>
+            <p className="mt-2 text-[11px] text-slate-500">Matching: exact category name, case-insensitive, extra spaces ignored. No partial matching. Unrecognised values are UNMAPPED and never scored.</p>
+          </div>
+          <div className="space-y-3 text-xs">
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="font-semibold text-navy-900">Weighting</div>
+              <div className="mt-1 text-slate-600">Short-Term (CONV-Short Term Aspiration, col AT): <b>{SHORT_TERM_WEIGHT * 100}%</b><br />Long-Term (CONV-Long Term Aspiration, col AV): <b>{LONG_TERM_WEIGHT * 100}%</b></div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="font-semibold text-navy-900">Formula</div>
+              <div className="mt-1 font-mono text-slate-700">((ST × 70%) + (LT × 30%)) / 3 × 100%</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3">
+              <div className="font-semibold text-navy-900">Classification (unrounded score)</div>
+              <div className="mt-1 text-slate-600">HIGH ≥ {HIGH_THRESHOLD}% · MEDIUM ≥ {MEDIUM_THRESHOLD}% and &lt; {HIGH_THRESHOLD}% · LOW &lt; {MEDIUM_THRESHOLD}%</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3 text-slate-600"><div className="font-semibold text-navy-900">Missing data</div>Both aspirations are required. No partial score, no weight redistribution, no default points.</div>
+            <p className="flex items-center gap-1.5 text-[11px] text-slate-500"><Lock size={12} />Changing these rules requires a code change and formal approval.</p>
+          </div>
+        </div>
+        {(() => {
+          const um = new Map<string, number>();
+          for (const e of employees) { const a = evaluateEmployeeAlignment(e.v.shortTermAspiration, e.v.longTermAspiration); for (const s of [a.shortTerm, a.longTerm]) if (s.status === 'unmapped') um.set(s.original, (um.get(s.original) || 0) + 1); }
+          const list = [...um.entries()].sort((a, b) => b[1] - a[1]);
+          return (
+            <div className="mt-5">
+              <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-amber-700">Unmapped values in the current dataset (review list)</div>
+              {list.length ? <ul className="grid gap-1 text-xs md:grid-cols-2 xl:grid-cols-3">{list.map(([v, n]) => <li key={v} className="flex justify-between rounded bg-slate-50 px-2 py-1"><span>"{v}"</span><span className="tabular-nums text-slate-400">{n}</span></li>)}</ul>
+                : <p className="text-xs text-slate-400">{employees.length ? 'None. Every aspiration value matches an approved category.' : 'Upload a dataset to review unmapped values.'}</p>}
+            </div>
+          );
+        })()}
       </Section>
 
       <Section title="Career aspiration categories" subtitle="Keyword rules used to group CONV-Short / Long Term Aspiration text. The original text is always kept and shown alongside the category.">

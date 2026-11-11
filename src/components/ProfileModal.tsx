@@ -8,6 +8,7 @@ import { Modal, Button, Badge } from './ui';
 import { EmployeeTable } from './EmployeeTable';
 import { FieldKey, FIELD_BY_KEY } from '../lib/fields';
 import { parseEntries } from '../lib/aspiration';
+import { evaluateEmployeeAlignment } from '../analytics/aspirationAlignment';
 
 const d = (e: Employee, k: FieldKey) => display(e.v[k]);
 
@@ -184,7 +185,12 @@ export function ProfileModal() {
       </div>
 
       <div className="mt-6 rounded-lg border border-slate-200 p-4">
-        <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-teal-700">Career Aspiration</h4>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-teal-700">Career Aspiration</h4>
+          {(() => { const al = evaluateEmployeeAlignment(e.v.shortTermAspiration, e.v.longTermAspiration); return (
+            <span className="text-xs text-slate-600">Aspiration Alignment (70:30): <b className="text-navy-900">{al.result ? al.result.displayAlignmentScore : 'N/A'}</b> · <b>{al.status}</b></span>
+          ); })()}
+        </div>
         <div className="grid gap-5 md:grid-cols-2">
           {([['Short-Term Aspiration', 'shortTermAspiration', 'shortTermOriginal'], ['Long-Term Aspiration', 'longTermAspiration', 'longTermOriginal']] as [string, FieldKey, FieldKey][]).map(([label, conv, orig]) => {
             const ents = parseEntries(e.v[conv], config.aspirationCategories);

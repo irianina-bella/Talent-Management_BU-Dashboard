@@ -29,6 +29,13 @@ Executive Overview · Talent Distribution · Talent Calibration · 9/12-Box Matr
 
 Exports run on explicit user action only: an **Excel summary** of aggregated counts (no employee rows), **PDF** of the current page, and **PNG** of any panel.
 
+## Employee Aspiration Alignment (approved 70:30 model)
+- Source: `CONV-Short Term Aspiration` (col AT, 70%) and `CONV-Long Term Aspiration` (col AV, 30%).
+- Points: the 10 approved categories in `src/analytics/aspirationCategoryMapping.ts` (High = 3, Medium = 2, Low = 1). Matching is exact, case-insensitive and ignores extra whitespace; anything else is UNMAPPED.
+- Score: `((ST × 0.70) + (LT × 0.30)) / 3 × 100`, computed only in `calculateAspirationAlignment()` (`src/analytics/aspirationAlignment.ts`).
+- Classes use the unrounded score: HIGH ≥ 80, MEDIUM ≥ 55, LOW < 55. Both aspirations are required: no partial scores and no weight redistribution.
+- Acceptance tests: `npm run test:alignment`. They also run automatically at the start of `npm run build`, so a deployment fails if any test fails.
+
 ## Development
 
 ```bash

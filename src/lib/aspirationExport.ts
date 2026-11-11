@@ -1,7 +1,7 @@
 // Career aspiration export. The analysis workbook holds aggregated counts only;
 // employee-level details are included only when the user explicitly asks for them.
 import { AspirationCategory, UNCLASSIFIED } from './config';
-import { EmpAsp, categoryCounts, topTexts, COVERAGE, coverageOf, PATTERNS, Horizon, HORIZON_LABEL, simBucket } from './aspiration';
+import { EmpAsp, categoryOrder, categoryCounts, topTexts, COVERAGE, coverageOf, PATTERNS, Horizon, HORIZON_LABEL, simBucket } from './aspiration';
 import { ORG_DIMS, orgName, pct } from './analytics';
 
 type Row = (string | number | null)[];
@@ -10,7 +10,7 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 function horizonSheet(rows: EmpAsp[], h: Horizon, cats: AspirationCategory[], filterText: string): Row[] {
   const total = rows.length;
   const withAsp = rows.filter((r) => (h === 'short' ? r.short : r.long).length).length;
-  const order = [...cats.map((c) => c.name), UNCLASSIFIED];
+  const order = categoryOrder(cats);
   const cc = categoryCounts(rows, h);
   const fc = categoryCounts(rows, h, 'fn');
   const out: Row[] = [

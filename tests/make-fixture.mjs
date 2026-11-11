@@ -5,8 +5,9 @@ const H = ['Personnel Number','Employee Name','Company Name','Personnel Area Tex
 const boxes = [['Growing Talent','Critical Resources','Talent Pool'],['Steady Performer','Developing Contributor','Talent Pool'],['Emerging Leaders','Critical Resources','Top Talent'],['Strugglers','Under Achiever',''],['Misfits','Under Performer',''],['Solid Contributor','Key Contributor','Talent Pool'],['Future Leaders','High Potential II','Talent Pool'],['Average Workers','Developing Contributor','Talent Pool']];
 const companies = ['TEST CO ALPHA','TEST CO BETA','TEST CO GAMMA'];
 // Synthetic aspirations. AS/AU (originals) deliberately carry an ORIG- prefix so tests can prove AT/AV are used.
-const st = ['Finance Manager', 'Head of Finance', 'HR Business Partner', 'N/A', '#N/A', '-', '', 'Operations Manager; Plant Manager', 'Sales Manager', 'Data Analyst'];
-const lt = ['Finance Director', 'CFO', 'Chief Human Resources Officer', 'General Manager', '#N/A', 'N/A', '', 'Director of Operations', 'Head of Strategy', 'Something unusual'];
+// CONV columns hold the approved aspiration categories (plus case/space variants, missing markers and one unmapped value).
+const st = ['Career Opportunity', 'Development', 'career opportunity', 'N/A', '#N/A', '-', '', 'Purpose', 'Infrastructure', 'Employee  Empowerment', 'Recognition and Retention', 'Better Salary'];
+const lt = ['Development', 'Career Opportunity', 'Personal Needs', 'Synergy Collaboration & Competent Personnel', '#N/A', 'N/A', '', 'Clarity & Clear Directions', 'Employee Value Proposition', 'Purpose', 'Something unusual'];
 const scales = [['A','5'],['B+','4'],['B','3'],['C','2'],['','']];
 const rows = [];
 for (let i = 0; i < 60; i++) {

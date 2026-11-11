@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "build": "npm run test:alignment && tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:alignment": "esbuild tests/aspirationAlignment.test.ts --bundle --platform=node --log-level=warning --outfile=node_modules/.cache/alignment.test.cjs && node node_modules/.cache/alignment.test.cjs"
   },
   "dependencies": {
     "html-to-image": "1.11.13",
@@ -23,10 +24,13 @@
     "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "4.3.4",
     "autoprefixer": "10.4.20",
+    "esbuild": "0.21.5",
     "postcss": "8.4.49",
     "tailwindcss": "3.4.17",
     "typescript": "5.6.3",
     "vite": "5.4.19"
   },
-  "engines": { "node": "22.x" }
+  "engines": {
+    "node": "22.x"
+  }
 }

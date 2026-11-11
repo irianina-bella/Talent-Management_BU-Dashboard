@@ -7,7 +7,7 @@ import { CrossTabTable } from '../components/CrossTabTable';
 import { Kpi, Section, PageHeader, BarList, Select, Note, Button, C, PALETTE, cx, clickName } from '../components/ui';
 import type { TableCol } from '../components/EmployeeTable';
 import { useFilterText } from '../components/ExportMenu';
-import { analyse, categoryCounts, topTexts, coverageOf, COVERAGE, PATTERNS, PATTERN_HELP, simBucket, EmpAsp, Horizon, HORIZON_LABEL } from '../lib/aspiration';
+import { analyse, categoryOrder, categoryCounts, topTexts, coverageOf, COVERAGE, PATTERNS, PATTERN_HELP, simBucket, EmpAsp, Horizon, HORIZON_LABEL } from '../lib/aspiration';
 import { crossTab, orgName, OrgDim, ORG_DIMS, fmtPct } from '../lib/analytics';
 import { UNCLASSIFIED } from '../lib/config';
 import { NA } from '../lib/model';
@@ -85,7 +85,7 @@ function HorizonView({ rows, h, total }: { rows: EmpAsp[]; h: Horizon; total: nu
   const cats = useMemo(() => categoryCounts(rows, h), [rows, h]);
   const fns = useMemo(() => categoryCounts(rows, h, 'fn'), [rows, h]);
   const texts = useMemo(() => topTexts(rows, h), [rows, h]);
-  const order = [...config.aspirationCategories.map((c) => c.name), UNCLASSIFIED];
+  const order = categoryOrder(config.aspirationCategories);
   const catRows = order.filter((c) => cats.has(c)).map((c) => ({ name: c, value: cats.get(c)!.length }));
   const unclassified = cats.get(UNCLASSIFIED)?.length ?? 0;
   const emps = (rs: EmpAsp[]) => rs.map((r) => r.e);
@@ -157,7 +157,7 @@ function CompareView({ rows, total }: { rows: EmpAsp[]; total: number }) {
   const both = rows.filter((r) => r.pattern);
   const patterns = PATTERNS.map((p) => ({ name: p, rows: both.filter((r) => r.patterns.includes(p)) }));
   const sims = ['High overlap (≥ 60%)', 'Partial overlap (20–59%)', 'Low overlap (< 20%)', 'Not comparable'].map((b) => ({ name: b, rows: both.filter((r) => simBucket(r.similarity) === b) }));
-  const order = [...config.aspirationCategories.map((c) => c.name), UNCLASSIFIED];
+  const order = categoryOrder(config.aspirationCategories);
   const byId = useMemo(() => new Map(rows.map((r) => [r.e.id, r])), [rows]);
   const tab = useMemo(() => crossTab(both.map((r) => r.e), (e) => byId.get(e.id)!.short[0].category, (e) => byId.get(e.id)!.long[0].category, order, order), [both, byId, config]);
 

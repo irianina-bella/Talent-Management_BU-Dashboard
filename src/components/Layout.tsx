@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { LayoutDashboard, Scale, Grid3x3, Users, LineChart, Building2, ArrowLeftRight, Upload, Settings, Contact, Menu, X, Compass, Lock, PieChart, ShieldAlert, Target } from 'lucide-react';
+import { LayoutDashboard, Scale, Grid3x3, Users, LineChart, Building2, ArrowLeftRight, Upload, Settings, Contact, Menu, X, Compass, Lock, PieChart, ShieldAlert, Target, Gauge } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { cx } from './ui';
 import { HeaderActions } from './ExportMenu';
 
-export type PageKey = 'overview' | 'distribution' | 'risk' | 'aspiration' | 'calibration' | 'matrix' | 'succession' | 'performance' | 'organization' | 'movement' | 'employees' | 'data' | 'settings';
+export type PageKey = 'overview' | 'distribution' | 'risk' | 'aspiration' | 'alignment' | 'calibration' | 'matrix' | 'succession' | 'performance' | 'organization' | 'movement' | 'employees' | 'data' | 'settings';
 
 export const NAV: { key: PageKey; label: string; icon: LucideIcon; section: string }[] = [
   { key: 'overview', label: 'Executive Overview', icon: LayoutDashboard, section: 'Analytics' },
@@ -18,6 +18,7 @@ export const NAV: { key: PageKey; label: string; icon: LucideIcon; section: stri
   { key: 'movement', label: 'Talent Movement', icon: ArrowLeftRight, section: 'Analytics' },
   { key: 'risk', label: 'Talent Risk Indicators', icon: ShieldAlert, section: 'Analytics' },
   { key: 'aspiration', label: 'Career Aspiration Analytics', icon: Target, section: 'Analytics' },
+  { key: 'alignment', label: 'Aspiration Alignment', icon: Gauge, section: 'Analytics' },
   { key: 'employees', label: 'Employee Directory', icon: Contact, section: 'Talent' },
   { key: 'data', label: 'Data Import', icon: Upload, section: 'Administration' },
   { key: 'settings', label: 'Mapping & Rules', icon: Settings, section: 'Administration' },
